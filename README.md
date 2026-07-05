@@ -61,6 +61,8 @@ SMTP_PASS=your-gmail-app-password
 QUOTE_TO_EMAIL=info@bindaddy.ca
 QUOTE_FROM_EMAIL=info@bindaddy.ca
 QUOTE_REPLY_SUBJECT=We received your quote request
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your-turnstile-site-key
+TURNSTILE_SECRET_KEY=your-turnstile-secret-key
 ```
 
 For Gmail, use an App Password with 2-Step Verification enabled. If the
@@ -69,6 +71,7 @@ or another transactional email provider instead.
 
 When a quote is submitted:
 
+- the visitor must complete a Cloudflare Turnstile verification check
 - the full request is sent to `QUOTE_TO_EMAIL`
 - a confirmation email is also sent back to the customer email that submitted the form
 

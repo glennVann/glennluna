@@ -23,8 +23,8 @@ export default function QuotePage() {
             <p className="mt-5 max-w-2xl text-lg leading-8 text-black/68">
               Use this form to prepare a project inquiry for websites, internal
               tools, POS systems, dashboards, server setup, networking, file
-              server setup, and custom platforms. It will open a prefilled
-              message addressed to `info@bindaddy.ca`.
+              server setup, and custom platforms. It sends directly through the
+              site and is protected with Turnstile verification.
             </p>
           </div>
         </div>

@@ -15,6 +15,34 @@ function formatField(value) {
   return value && String(value).trim() ? String(value).trim() : "Not provided";
 }
 
+async function verifyTurnstileToken(token, ipAddress) {
+  const secretKey = getRequiredEnv("TURNSTILE_SECRET_KEY");
+  const formData = new FormData();
+
+  formData.append("secret", secretKey);
+  formData.append("response", token);
+  formData.append("idempotency_key", crypto.randomUUID());
+
+  if (ipAddress) {
+    formData.append("remoteip", ipAddress);
+  }
+
+  const response = await fetch(
+    "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+    {
+      method: "POST",
+      body: formData,
+      cache: "no-store",
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Turnstile siteverify request failed.");
+  }
+
+  return response.json();
+}
+
 export async function POST(request) {
   try {
     const body = await request.json();
@@ -28,11 +56,44 @@ export async function POST(request) {
       details,
       infrastructureNotes,
       services,
+      turnstileToken,
     } = body;
 
     if (!name || !email || !details) {
       return NextResponse.json(
         { error: "Name, email, and project details are required." },
+        { status: 400 },
+      );
+    }
+
+    if (!turnstileToken) {
+      return NextResponse.json(
+        { error: "Verification is required before sending a quote request." },
+        { status: 400 },
+      );
+    }
+
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ipAddress =
+      forwardedFor?.split(",")[0]?.trim() ||
+      request.headers.get("x-real-ip") ||
+      "";
+    const turnstileResult = await verifyTurnstileToken(
+      turnstileToken,
+      ipAddress,
+    );
+
+    if (!turnstileResult.success) {
+      console.warn(
+        "Turnstile verification failed:",
+        turnstileResult["error-codes"] || [],
+      );
+
+      return NextResponse.json(
+        {
+          error:
+            "Verification failed or expired. Please complete the Turnstile check again.",
+        },
         { status: 400 },
       );
     }
@@ -165,7 +226,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         error:
-          "Unable to send the quote request right now. Check SMTP configuration and try again.",
+          "Unable to send the quote request right now. Check the server configuration and try again.",
       },
       { status: 500 },
     );

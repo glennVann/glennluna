@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import Script from "next/script";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const initialForm = {
   name: "",
@@ -33,14 +34,71 @@ const serviceOptions = [
   "File Server Setup",
 ];
 
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
+
+function resetTurnstile(widgetIdRef, setTurnstileToken) {
+  setTurnstileToken("");
+
+  if (
+    typeof window !== "undefined" &&
+    window.turnstile &&
+    widgetIdRef.current !== null
+  ) {
+    window.turnstile.reset(widgetIdRef.current);
+  }
+}
+
 export default function QuoteForm() {
   const [form, setForm] = useState(initialForm);
   const [selectedServices, setSelectedServices] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState("");
   const [submitState, setSubmitState] = useState({
     type: "",
     message: "",
   });
+  const widgetRef = useRef(null);
+  const widgetIdRef = useRef(null);
+
+  const renderTurnstileWidget = useCallback(() => {
+    if (
+      !turnstileSiteKey ||
+      typeof window === "undefined" ||
+      !window.turnstile ||
+      !widgetRef.current ||
+      widgetIdRef.current !== null
+    ) {
+      return;
+    }
+
+    widgetIdRef.current = window.turnstile.render(widgetRef.current, {
+      sitekey: turnstileSiteKey,
+      theme: "light",
+      callback(token) {
+        setTurnstileToken(token);
+        setSubmitState((current) =>
+          current.type === "error"
+            ? { type: "", message: "" }
+            : current,
+        );
+      },
+      "expired-callback"() {
+        setTurnstileToken("");
+      },
+      "error-callback"() {
+        setTurnstileToken("");
+        setSubmitState({
+          type: "error",
+          message:
+            "Verification could not be completed. Refresh the page and try again.",
+        });
+      },
+    });
+  }, []);
+
+  useEffect(() => {
+    renderTurnstileWidget();
+  }, [renderTurnstileWidget]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -61,6 +119,23 @@ export default function QuoteForm() {
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (!turnstileSiteKey) {
+      setSubmitState({
+        type: "error",
+        message:
+          "Turnstile is not configured yet. Add the site key before accepting quote requests.",
+      });
+      return;
+    }
+
+    if (!turnstileToken) {
+      setSubmitState({
+        type: "error",
+        message: "Please complete the verification before sending your request.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitState({ type: "", message: "" });
 
@@ -73,6 +148,7 @@ export default function QuoteForm() {
         body: JSON.stringify({
           ...form,
           services: selectedServices,
+          turnstileToken,
         }),
       });
 
@@ -89,6 +165,7 @@ export default function QuoteForm() {
       });
       setForm(initialForm);
       setSelectedServices([]);
+      resetTurnstile(widgetIdRef, setTurnstileToken);
     } catch (error) {
       setSubmitState({
         type: "error",
@@ -97,6 +174,7 @@ export default function QuoteForm() {
             ? error.message
             : "Unable to send quote request.",
       });
+      resetTurnstile(widgetIdRef, setTurnstileToken);
     } finally {
       setIsSubmitting(false);
     }
@@ -104,6 +182,14 @@ export default function QuoteForm() {
 
   return (
     <div className="fade-up rounded-[2rem] border border-black/8 bg-white/78 p-8 shadow-[0_24px_60px_rgba(21,35,33,0.08)] backdrop-blur sm:p-10">
+      {turnstileSiteKey ? (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={renderTurnstileWidget}
+        />
+      ) : null}
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.28em] text-black/45">
@@ -250,11 +336,26 @@ export default function QuoteForm() {
           />
         </label>
 
+        <div className="grid gap-3 rounded-[1.5rem] border border-black/10 bg-[#fcfaf6] p-5">
+          <p className="text-sm font-medium text-[#152321]">Verification</p>
+          <div ref={widgetRef} className="min-h-16" />
+          <p className="text-sm leading-7 text-black/60">
+            Complete the Turnstile check before sending your quote request.
+          </p>
+          {!turnstileSiteKey ? (
+            <p className="text-sm leading-7 text-[#b94a48]">
+              Add `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to enable quote form
+              protection.
+            </p>
+          ) : null}
+        </div>
+
         <div className="flex flex-col gap-3 border-t border-black/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-xl">
             <p className="text-sm leading-7 text-black/60">
               This form sends your quote request directly to `info@bindaddy.ca`
-              from the site using the server email configuration.
+              from the site using the server email configuration and Turnstile
+              verification.
             </p>
             {submitState.message ? (
               <p
@@ -270,8 +371,8 @@ export default function QuoteForm() {
           </div>
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center rounded-full bg-[#152321] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
+            disabled={isSubmitting || !turnstileSiteKey || !turnstileToken}
+            className="inline-flex items-center justify-center rounded-full bg-[#152321] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:bg-[#152321]"
           >
             {isSubmitting ? "Sending..." : "Send Quote Request"}
           </button>
