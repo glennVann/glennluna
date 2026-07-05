@@ -10,5 +10,17 @@ export default function manifest() {
     theme_color: "#152321",
     categories: ["business", "technology", "portfolio"],
     lang: "en-CA",
+    icons: [
+      {
+        src: "/icon.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        src: "/apple-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
+    ],
   };
 }

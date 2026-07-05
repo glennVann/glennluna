@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
@@ -147,13 +148,25 @@ export default function Home() {
 
       <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-8 sm:px-10 lg:px-12">
         <header className="fade-up flex items-center justify-between border-b border-black/8 pb-5">
-          <div>
-            <p className="font-mono text-xs uppercase tracking-[0.3em] text-black/50">
-              Developer Profile
-            </p>
-            <h1 className="mt-2 text-lg font-semibold text-[#152321]">
-              Glenn Luna
-            </h1>
+          <div className="flex items-center gap-4">
+            <div className="overflow-hidden rounded-2xl border border-black/10 bg-[#07111f] shadow-[0_14px_32px_rgba(7,17,31,0.18)]">
+              <Image
+                src="/glenn-luna-logo.png"
+                alt="Glenn Luna logo"
+                width={64}
+                height={64}
+                className="h-14 w-14 object-cover sm:h-16 sm:w-16"
+                priority
+              />
+            </div>
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-black/50">
+                Developer Profile
+              </p>
+              <h1 className="mt-2 text-lg font-semibold text-[#152321]">
+                Glenn Luna
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Link
