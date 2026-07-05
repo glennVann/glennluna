@@ -27,6 +27,17 @@ npm start
 
 The app is configured to run on port `3003` by default.
 
+## VPS Start Script
+
+Use the root script below if you want `systemd` to start the app directly:
+
+```bash
+./start-glennluna.sh
+```
+
+It runs the app in production mode on `0.0.0.0:3003` and expects `.next` to
+already exist from `npm run build`.
+
 ## Notes
 
 - The main profile content lives in `app/page.js`.
