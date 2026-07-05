@@ -148,6 +148,8 @@ const structuredData = [
 ];
 
 export default function RootLayout({ children }) {
+  const currentYear = new Date().getFullYear();
+
   return (
     <html
       lang="en"
@@ -159,6 +161,76 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
         {children}
+        <footer className="border-t border-black/8 bg-[#152321] text-white">
+          <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.1fr_0.9fr_0.8fr] lg:px-12">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/45">
+                Glenn Luna
+              </p>
+              <p className="mt-4 max-w-md text-sm leading-7 text-white/72">
+                Software developer focused on modern websites, custom software,
+                technical SEO, server setup, and dependable product delivery.
+              </p>
+            </div>
+
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/45">
+                Navigation
+              </p>
+              <div className="mt-4 flex flex-col gap-3 text-sm text-white/78">
+                <a href="/" className="transition hover:text-white">
+                  Home
+                </a>
+                <a href="/#about" className="transition hover:text-white">
+                  About Me
+                </a>
+                <a href="/projects" className="transition hover:text-white">
+                  Projects
+                </a>
+                <a href="/quote" className="transition hover:text-white">
+                  Request Quote
+                </a>
+              </div>
+            </div>
+
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/45">
+                Contact
+              </p>
+              <div className="mt-4 flex flex-col gap-3 text-sm text-white/78">
+                <a
+                  href="mailto:glenncotamuraluna@gmail.com"
+                  className="transition hover:text-white"
+                >
+                  glenncotamuraluna@gmail.com
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/glenn-luna-62b1ba285/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition hover:text-white"
+                >
+                  LinkedIn
+                </a>
+                <a
+                  href="https://github.com/glennVann"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition hover:text-white"
+                >
+                  GitHub
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/8">
+            <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 py-4 text-sm text-white/56 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-12">
+              <p>&copy; {currentYear} Glenn Luna. All rights reserved.</p>
+              <p>Built with Next.js, product focus, and clean execution.</p>
+            </div>
+          </div>
+        </footer>
       </body>
     </html>
   );

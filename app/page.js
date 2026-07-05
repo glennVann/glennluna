@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Glenn Luna | Software Developer",
   description:
     "Glenn Luna builds Next.js websites, custom web apps, technical SEO improvements, server setups, networking solutions, and maintainable full-stack software.",
   alternates: {
@@ -140,6 +139,12 @@ const stackGroups = [
   },
 ];
 
+const aboutMePoints = [
+  "I enjoy building software that feels polished to users and manageable behind the scenes.",
+  "My work usually sits at the intersection of product thinking, clean engineering, and practical business needs.",
+  "I am especially comfortable helping projects move from idea to working system with clear structure and dependable execution.",
+];
+
 export default function Home() {
   return (
     <main className="relative isolate overflow-hidden">
@@ -169,6 +174,12 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <a
+              href="#about"
+              className="rounded-full border border-[#152321]/15 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] shadow-[0_12px_28px_rgba(21,35,33,0.08)] transition hover:-translate-y-0.5 hover:bg-white"
+            >
+              About Me
+            </a>
             <Link
               href="/quote"
               className="rounded-full bg-[#152321] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(21,35,33,0.12)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
@@ -397,6 +408,45 @@ export default function Home() {
                 {strength}
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="about"
+        className="mx-auto w-full max-w-7xl px-6 py-8 sm:px-10 lg:px-12"
+      >
+        <div className="fade-up grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[2rem] border border-black/8 bg-[#152321] p-8 text-white shadow-[0_24px_60px_rgba(21,35,33,0.16)] sm:p-10">
+            <p className="font-mono text-xs uppercase tracking-[0.28em] text-white/50">
+              About Me
+            </p>
+            <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+              I build digital products with a strong balance of design,
+              reliability, and business practicality.
+            </h3>
+            <p className="mt-5 text-base leading-8 text-white/76">
+              I&apos;m Glenn Luna, a software developer focused on modern web
+              applications, technical SEO, infrastructure support, and
+              maintainable product delivery. I like creating systems that look
+              intentional on the surface and stay dependable as they grow.
+            </p>
+          </div>
+
+          <div className="rounded-[2rem] border border-black/8 bg-white/75 p-8 shadow-[0_24px_60px_rgba(21,35,33,0.08)] backdrop-blur sm:p-10">
+            <p className="font-mono text-xs uppercase tracking-[0.28em] text-black/45">
+              Working Perspective
+            </p>
+            <div className="mt-6 grid gap-4">
+              {aboutMePoints.map((point) => (
+                <div
+                  key={point}
+                  className="rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
+                >
+                  <p className="text-sm leading-7 text-[#152321]">{point}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
