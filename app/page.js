@@ -254,13 +254,23 @@ export default function Home() {
             <div className="absolute inset-x-10 inset-y-8 -z-10 rounded-[2rem] bg-[#dd8c36]/12 blur-3xl" />
             <div className="rounded-[2rem] border border-[#152321]/10 bg-[#152321] p-8 text-white shadow-[0_24px_70px_rgba(21,35,33,0.18)]">
               <p className="font-mono text-xs uppercase tracking-[0.26em] text-white/55">
-                Professional Snapshot
+                Cloud And Infrastructure
               </p>
+              <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#07111f] shadow-[0_20px_50px_rgba(0,0,0,0.22)]">
+                <Image
+                  src="/cloud-infrastructure-illustration.png"
+                  alt="Isometric cloud infrastructure illustration with servers, networking, dashboards, and connected services"
+                  width={1536}
+                  height={1024}
+                  className="h-auto w-full object-cover"
+                  priority
+                />
+              </div>
               <div className="mt-8 space-y-6">
                 <div>
-                  <p className="text-sm text-white/55">Primary Role</p>
+                  <p className="text-sm text-white/55">Primary Focus</p>
                   <p className="mt-2 text-2xl font-semibold">
-                    Full-Stack Software Developer
+                    Full-Stack Development And Cloud-Ready Delivery
                   </p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -269,8 +279,8 @@ export default function Home() {
                       Specialties
                     </p>
                     <p className="mt-3 text-sm leading-7 text-white/78">
-                      Product engineering, API integration, and scalable UI
-                      systems.
+                      Product engineering, API integration, deployment
+                      planning, and scalable UI systems.
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -278,8 +288,8 @@ export default function Home() {
                       Value
                     </p>
                     <p className="mt-3 text-sm leading-7 text-white/78">
-                      Professional execution with a strong eye for user
-                      experience.
+                      Professional execution across software, hosting,
+                      networking, and user experience.
                     </p>
                   </div>
                 </div>
@@ -289,8 +299,8 @@ export default function Home() {
                   </p>
                   <p className="mt-3 text-sm leading-7 text-white/78">
                     I enjoy turning complex requirements into clear product
-                    decisions, stable codebases, and interfaces that look
-                    intentional on every screen size.
+                    decisions, stable codebases, reliable infrastructure, and
+                    interfaces that look intentional on every screen size.
                   </p>
                 </div>
               </div>
