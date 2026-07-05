@@ -36,6 +36,11 @@ const serviceOptions = [
 export default function QuoteForm() {
   const [form, setForm] = useState(initialForm);
   const [selectedServices, setSelectedServices] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitState, setSubmitState] = useState({
+    type: "",
+    message: "",
+  });
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -53,30 +58,48 @@ export default function QuoteForm() {
     );
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const subject = `Project Quote Request - ${form.name || "New Inquiry"}`;
-    const bodyLines = [
-      "Project Quote Request",
-      "",
-      `Name: ${form.name}`,
-      `Email: ${form.email}`,
-      `Company: ${form.company || "Not provided"}`,
-      `Project Type: ${form.projectType}`,
-      `Services Needed: ${selectedServices.length ? selectedServices.join(", ") : "Not provided"}`,
-      `Timeline: ${form.timeline || "Not provided"}`,
-      `Budget Range: ${form.budget || "Not provided"}`,
-      "",
-      "Project Details:",
-      form.details || "Not provided",
-      "",
-      "Infrastructure / Setup Notes:",
-      form.infrastructureNotes || "Not provided",
-    ];
+    setIsSubmitting(true);
+    setSubmitState({ type: "", message: "" });
 
-    const mailto = `mailto:info@bindaddy.ca?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
-    window.location.href = mailto;
+    try {
+      const response = await fetch("/api/quote", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...form,
+          services: selectedServices,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to send quote request.");
+      }
+
+      setSubmitState({
+        type: "success",
+        message:
+          "Quote request sent successfully. I will review it and follow up soon.",
+      });
+      setForm(initialForm);
+      setSelectedServices([]);
+    } catch (error) {
+      setSubmitState({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to send quote request.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -228,15 +251,29 @@ export default function QuoteForm() {
         </label>
 
         <div className="flex flex-col gap-3 border-t border-black/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm leading-7 text-black/60">
-            Submitting this form opens your email app with a prepared message to
-            `info@bindaddy.ca`.
-          </p>
+          <div className="max-w-xl">
+            <p className="text-sm leading-7 text-black/60">
+              This form sends your quote request directly to `info@bindaddy.ca`
+              from the site using the server email configuration.
+            </p>
+            {submitState.message ? (
+              <p
+                className={`mt-2 text-sm leading-7 ${
+                  submitState.type === "success"
+                    ? "text-[#1b5e59]"
+                    : "text-[#b94a48]"
+                }`}
+              >
+                {submitState.message}
+              </p>
+            ) : null}
+          </div>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="inline-flex items-center justify-center rounded-full bg-[#152321] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
           >
-            Send Quote Request
+            {isSubmitting ? "Sending..." : "Send Quote Request"}
           </button>
         </div>
       </form>

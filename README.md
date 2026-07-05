@@ -47,6 +47,31 @@ restart it with the same file:
 
 That command restarts the existing `systemd` service and prints its status.
 
+## Quote Email Configuration
+
+The quote form can send directly through SMTP instead of opening a local mail
+app. Configure these environment variables:
+
+```bash
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=info@bindaddy.ca
+SMTP_PASS=your-gmail-app-password
+QUOTE_TO_EMAIL=info@bindaddy.ca
+QUOTE_FROM_EMAIL=info@bindaddy.ca
+QUOTE_REPLY_SUBJECT=We received your quote request
+```
+
+For Gmail, use an App Password with 2-Step Verification enabled. If the
+Google account does not allow App Passwords, use Google Workspace SMTP relay
+or another transactional email provider instead.
+
+When a quote is submitted:
+
+- the full request is sent to `QUOTE_TO_EMAIL`
+- a confirmation email is also sent back to the customer email that submitted the form
+
 ## Notes
 
 - The main profile content lives in `app/page.js`.
