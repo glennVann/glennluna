@@ -140,9 +140,23 @@ const projects = [
 ];
 
 export const metadata = {
-  title: "Projects | Glenn Luna",
+  title: "Projects",
   description:
     "Selected software development projects by Glenn Luna, including Tighomecare.ca, Feluna Realty Booking, Sign Dashboard, Stackwatch, bubbleteabrewers.ca, GitHub Portfolio, and bindaddy.ca.",
+  alternates: {
+    canonical: "/projects",
+  },
+  openGraph: {
+    title: "Projects | Glenn Luna",
+    description:
+      "Explore selected web development, platform, dashboard, SaaS, and full-stack software projects built by Glenn Luna.",
+    url: "https://glennluna.bindaddy.ca/projects",
+  },
+  twitter: {
+    title: "Projects | Glenn Luna",
+    description:
+      "Selected product, web application, and software engineering projects by Glenn Luna.",
+  },
 };
 
 export default function ProjectsPage() {

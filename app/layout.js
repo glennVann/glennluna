@@ -1,6 +1,11 @@
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import "./globals.css";
 
+const siteUrl = "https://glennluna.bindaddy.ca";
+const siteTitle = "Glenn Luna | Software Developer";
+const siteDescription =
+  "Glenn Luna builds modern websites, Next.js applications, custom software, server setups, networking solutions, and technical SEO improvements for growing businesses.";
+
 const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
@@ -13,27 +18,91 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata = {
-  title: "Glenn Luna | Software Developer",
-  description:
-    "Professional software developer profile built with Next.js 16 and Tailwind CSS.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: siteTitle,
+    template: "%s | Glenn Luna",
+  },
+  description: siteDescription,
+  applicationName: "Glenn Luna Developer Profile",
+  keywords: [
+    "Glenn Luna",
+    "software developer",
+    "full-stack developer",
+    "Next.js developer",
+    "web developer",
+    "custom software development",
+    "technical SEO",
+    "server setup",
+    "networking setup",
+  ],
+  authors: [{ name: "Glenn Luna", url: siteUrl }],
+  creator: "Glenn Luna",
+  publisher: "Glenn Luna",
+  category: "technology",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    url: siteUrl,
+    siteName: "Glenn Luna",
+    title: siteTitle,
+    description: siteDescription,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
 };
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "Person",
-  name: "Glenn Luna",
-  jobTitle: "Software Developer",
-  description:
-    "Software developer focused on polished interfaces, reliable systems, and maintainable product delivery.",
-  knowsAbout: [
-    "Next.js",
-    "React",
-    "JavaScript",
-    "Tailwind CSS",
-    "API Design",
-    "Full-Stack Development",
-  ],
-};
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    name: "Glenn Luna",
+    url: siteUrl,
+    jobTitle: "Software Developer",
+    description:
+      "Software developer focused on polished interfaces, reliable systems, technical SEO, and maintainable product delivery.",
+    email: "mailto:glenncotamuraluna@gmail.com",
+    sameAs: [
+      "https://www.linkedin.com/in/glenn-luna-62b1ba285/",
+      "https://github.com/glennVann",
+    ],
+    knowsAbout: [
+      "Next.js",
+      "React",
+      "JavaScript",
+      "Tailwind CSS",
+      "API Design",
+      "Full-Stack Development",
+      "Technical SEO",
+      "Server Setup",
+      "Networking",
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Glenn Luna",
+    url: siteUrl,
+    description: siteDescription,
+  },
+];
 
 export default function RootLayout({ children }) {
   return (

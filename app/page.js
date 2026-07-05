@@ -1,5 +1,25 @@
 import Link from "next/link";
 
+export const metadata = {
+  title: "Software Developer",
+  description:
+    "Glenn Luna builds Next.js websites, custom web apps, technical SEO improvements, server setups, networking solutions, and maintainable full-stack software.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Glenn Luna | Software Developer",
+    description:
+      "Modern websites, custom web apps, technical SEO, server setup, and networking support built with a full-stack product mindset.",
+    url: "https://glennluna.bindaddy.ca",
+  },
+  twitter: {
+    title: "Glenn Luna | Software Developer",
+    description:
+      "Next.js development, technical SEO, infrastructure setup, and full-stack product delivery.",
+  },
+};
+
 const focusAreas = [
   {
     title: "Frontend Engineering",
@@ -163,11 +183,11 @@ export default function Home() {
                 foundations.
               </h2>
               <p className="max-w-2xl text-lg leading-8 text-black/68 sm:text-xl">
-                I create modern web applications that blend clean architecture,
-                polished user experience, dependable delivery, and practical
-                infrastructure. My focus is on building software that feels
-                professional, performs well, and stays maintainable as products
-                evolve.
+                I create modern websites, Next.js applications, custom web
+                software, technical SEO improvements, and practical
+                infrastructure setups. My focus is on building digital products
+                that feel professional, perform well, and stay maintainable as
+                business needs evolve.
               </p>
             </div>
 
@@ -192,8 +212,8 @@ export default function Home() {
                   Focus
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Web applications, scalable interfaces, and dependable product
-                  delivery.
+                  Next.js web apps, scalable interfaces, technical SEO, and
+                  dependable product delivery.
                 </p>
               </div>
               <div className="rounded-[1.75rem] border border-black/8 bg-white/72 p-5 shadow-[0_18px_45px_rgba(21,35,33,0.08)] backdrop-blur">
@@ -210,8 +230,8 @@ export default function Home() {
                   Approach
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Clear communication, reliable execution, and maintainable code
-                  from start to finish.
+                  Clear communication, reliable execution, and maintainable
+                  code from planning through launch.
                 </p>
               </div>
             </div>

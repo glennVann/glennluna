@@ -1,9 +1,23 @@
 import QuoteForm from "./quote-form";
 
 export const metadata = {
-  title: "Project Quote | Glenn Luna",
+  title: "Project Quote",
   description:
     "Request a project quote from Glenn Luna for websites, platforms, and custom software work.",
+  alternates: {
+    canonical: "/quote",
+  },
+  openGraph: {
+    title: "Project Quote | Glenn Luna",
+    description:
+      "Request a quote for websites, dashboards, POS systems, server setup, networking, and custom software development.",
+    url: "https://glennluna.bindaddy.ca/quote",
+  },
+  twitter: {
+    title: "Project Quote | Glenn Luna",
+    description:
+      "Start a project quote for custom software, websites, server setup, and networking work.",
+  },
 };
 
 export default function QuotePage() {
