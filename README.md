@@ -16,13 +16,16 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:3003`.
 
 ## Build
 
 ```bash
 npm run build
+npm start
 ```
+
+The app is configured to run on port `3003` by default.
 
 ## Notes
 
