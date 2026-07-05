@@ -5,6 +5,14 @@ const siteUrl = "https://glennluna.bindaddy.ca";
 const siteTitle = "Glenn Luna | Software Developer";
 const siteDescription =
   "Glenn Luna builds modern websites, Next.js applications, custom software, server setups, networking solutions, and technical SEO improvements for growing businesses.";
+const serviceAreas = [
+  "Web Development",
+  "Next.js Development",
+  "Custom Software Development",
+  "Technical SEO",
+  "Server Setup",
+  "Networking Setup",
+];
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -109,6 +117,33 @@ const structuredData = [
     name: "Glenn Luna",
     url: siteUrl,
     description: siteDescription,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Glenn Luna",
+    url: siteUrl,
+    email: "mailto:glenncotamuraluna@gmail.com",
+    sameAs: [
+      "https://www.linkedin.com/in/glenn-luna-62b1ba285/",
+      "https://github.com/glennVann",
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    name: "Glenn Luna Software Development Services",
+    url: siteUrl,
+    description: siteDescription,
+    provider: {
+      "@type": "Person",
+      name: "Glenn Luna",
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "Canada",
+    },
+    serviceType: serviceAreas,
   },
 ];
 

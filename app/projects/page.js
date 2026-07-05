@@ -1,143 +1,5 @@
 import Link from "next/link";
-
-const projects = [
-  {
-    name: "Tighomecare.ca",
-    category: "Healthcare Services Platform",
-    status: "Ongoing Project",
-    summary:
-      "An ongoing home care website project designed to build trust quickly, communicate services clearly, and make it easy for families to take the next step.",
-    highlights: [
-      "Clear service presentation for families and caregivers",
-      "Professional visual tone that supports trust and credibility",
-      "Responsive layout optimized for mobile and desktop browsing",
-    ],
-    features: [
-      "Service pages for home care support and caregiver information",
-      "Clear contact and inquiry paths for families seeking care",
-      "Mobile-friendly layout for easy access across devices",
-      "Trust-focused presentation with clean, professional design",
-    ],
-    url: "https://tighomecare.ca",
-  },
-  {
-    name: "Feluna Realty Booking",
-    category: "Real Estate Booking Platform",
-    status: "Ongoing Project",
-    summary:
-      "An ongoing real estate booking platform designed to support property discovery, agent presentation, and private visit scheduling in a streamlined web experience.",
-    highlights: [
-      "Landing page built around listings and agent presentation",
-      "Private property visit booking flow for prospective clients",
-      "Bookings dashboard for managing submitted requests",
-    ],
-    features: [
-      "Agent profile presentation for a more trust-driven real estate experience",
-      "Property visit request form for private booking inquiries",
-      "Dashboard workflow for reviewing and managing bookings",
-      "Structured listing photo support with room for future database growth",
-    ],
-    url: null,
-  },
-  {
-    name: "Sign Dashboard",
-    category: "Sign Shop Operations Platform",
-    status: "Ongoing Project",
-    summary:
-      "An ongoing full-stack dashboard for sign shop operations, bringing CRM, ticketing, inventory, proofing, and file workflows into one connected system.",
-    highlights: [
-      "CRM, tickets, quotes, inventory, and job order workflows in one platform",
-      "Live dashboard updates through SignalR for operational visibility",
-      "Integrated artwork uploads, proofing, and customer review links",
-    ],
-    features: [
-      "Production board with status tracking from pending to completion",
-      "Artwork upload versioning for design and production teams",
-      "Proof review workflow with customer approvals and revision requests",
-      "Local agent support for syncing files to customer-managed drives or NAS storage",
-    ],
-    url: null,
-  },
-  {
-    name: "Stackwatch",
-    category: "Website Monitoring SaaS MVP",
-    status: "Ongoing Project",
-    summary:
-      "An ongoing monitoring product built for agencies and operators who need visibility into uptime, SEO issues, conversion risks, and site performance across multiple websites.",
-    highlights: [
-      "Multi-site monitoring dashboard with portfolio-level risk views",
-      "Checks for uptime, response speed, SSL, SEO basics, and conversion signals",
-      "SEO Lab support and SaaS-ready database foundation for growth",
-    ],
-    features: [
-      "Add-site workflow for agency and client website monitoring",
-      "Run-all and per-site checks for operational visibility",
-      "Cloudflare integration path for traffic and page-load analytics",
-      "MariaDB-backed SaaS foundation for users, organizations, alerts, and subscriptions",
-    ],
-    url: null,
-  },
-  {
-    name: "bubbleteabrewers.ca",
-    category: "POS and Web App",
-    status: "Ongoing Project",
-    summary:
-      "An ongoing POS and web application project for Bubble Tea Brewers, including a site conversion from PHP to Next.js and integration of the POS system with the backend while streamlining operations and supporting a polished customer-facing digital experience.",
-    highlights: [
-      "Conversion of the existing website experience from PHP to Next.js",
-      "POS workflows designed for practical day-to-day business operations",
-      "Integration of the POS system with backend workflows and data handling",
-      "Web app experience that supports brand presentation and usability",
-      "Built with scalability in mind for future product and operational needs",
-    ],
-    features: [
-      "Modernized frontend architecture through PHP-to-Next.js migration",
-      "POS functionality aligned with real business operations",
-      "Backend integration for completed sales, operational data, and system workflows",
-      "Customer-facing web experience with a cleaner, more maintainable stack",
-      "Foundation for future content, product, and operational growth",
-    ],
-    url: "https://bubbleteabrewers.ca",
-  },
-  {
-    name: "GitHub Portfolio",
-    category: "Code Portfolio",
-    status: "Active Projects",
-    summary:
-      "A public GitHub portfolio that brings together development work across web applications, full-stack projects, and practical product builds.",
-    highlights: [
-      "Public repositories that show real implementation work",
-      "A mix of frontend, backend, and full-stack projects",
-      "Ongoing development and experimentation across products",
-    ],
-    features: [
-      "Source code available for technical review",
-      "Project variety across different business and product needs",
-      "Visible coding style, structure, and implementation approach",
-      "A central place to explore more of my software work",
-    ],
-    url: "https://github.com/glennluna",
-  },
-  {
-    name: "bindaddy.ca",
-    category: "Customer-Facing Digital Platform",
-    status: "Completed Project",
-    summary:
-      "A completed modern web platform focused on customer journeys, account experiences, and product operations, with an emphasis on clarity, usability, and scalable delivery.",
-    highlights: [
-      "Customer-centric flows for discovery, booking, and account use",
-      "Full-stack implementation thinking across frontend and backend",
-      "Built to support growth with maintainable product foundations",
-    ],
-    features: [
-      "Account-based user experience for customer access and management",
-      "Booking and service flow support for product interactions",
-      "Frontend and backend integration for scalable platform behavior",
-      "Structured product pages and operational workflows",
-    ],
-    url: "https://bindaddy.ca",
-  },
-];
+import { projects } from "./project-data";
 
 export const metadata = {
   title: "Projects",
@@ -191,11 +53,11 @@ export default function ProjectsPage() {
 
       <section className="mx-auto w-full max-w-7xl px-6 py-10 sm:px-10 lg:px-12">
         <div className="grid gap-6">
-          {projects.map((project) => (
-            <article
-              key={project.name}
-              className="fade-up rounded-[2.25rem] border border-black/8 bg-white/78 p-8 shadow-[0_24px_60px_rgba(21,35,33,0.08)] backdrop-blur sm:p-10"
-            >
+            {projects.map((project) => (
+              <article
+                key={project.name}
+                className="fade-up rounded-[2.25rem] border border-black/8 bg-white/78 p-8 shadow-[0_24px_60px_rgba(21,35,33,0.08)] backdrop-blur sm:p-10"
+              >
               <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-3xl">
                   <p className="font-mono text-xs uppercase tracking-[0.28em] text-[#1b5e59]">
@@ -211,20 +73,28 @@ export default function ProjectsPage() {
                     {project.summary}
                   </p>
                 </div>
-                {project.url ? (
-                  <a
-                    href={project.url}
-                    target="_blank"
-                    rel="noreferrer"
+                <div className="flex flex-col gap-3">
+                  <Link
+                    href={`/projects/${project.slug}`}
                     className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
                   >
-                    Visit Project
-                  </a>
-                ) : (
-                  <div className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321]">
-                    Internal Project
-                  </div>
-                )}
+                    View Project Details
+                  </Link>
+                  {project.url ? (
+                    <a
+                      href={project.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5"
+                    >
+                      Visit Live Project
+                    </a>
+                  ) : (
+                    <div className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321]">
+                      Internal Project
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-3">

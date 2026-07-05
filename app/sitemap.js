@@ -1,3 +1,5 @@
+import { projects } from "./projects/project-data";
+
 const siteUrl = "https://glennluna.bindaddy.ca";
 
 export default function sitemap() {
@@ -22,5 +24,11 @@ export default function sitemap() {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    ...projects.map((project) => ({
+      url: `${siteUrl}/projects/${project.slug}`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.75,
+    })),
   ];
 }

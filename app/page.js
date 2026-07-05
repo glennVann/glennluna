@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Software Developer",
+  title: "Glenn Luna | Software Developer",
   description:
     "Glenn Luna builds Next.js websites, custom web apps, technical SEO improvements, server setups, networking solutions, and maintainable full-stack software.",
   alternates: {
