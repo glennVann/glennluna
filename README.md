@@ -38,6 +38,15 @@ Use the root script below if you want `systemd` to start the app directly:
 It runs the app in production mode on `0.0.0.0:3003` and expects `.next` to
 already exist from `npm run build`.
 
+For a VPS that already has the `glennluna.service` unit installed, you can
+restart it with the same file:
+
+```bash
+./start-glennluna.sh restart
+```
+
+That command restarts the existing `systemd` service and prints its status.
+
 ## Notes
 
 - The main profile content lives in `app/page.js`.

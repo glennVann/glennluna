@@ -5,6 +5,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+COMMAND="${1:-start}"
+
+if [ "$COMMAND" = "restart" ]; then
+  sudo systemctl restart glennluna.service
+  sudo systemctl status glennluna.service --no-pager -l
+  exit 0
+fi
+
 export NODE_ENV="${NODE_ENV:-production}"
 export HOST="${HOST:-0.0.0.0}"
 export PORT="${PORT:-3003}"
