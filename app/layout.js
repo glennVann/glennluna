@@ -312,7 +312,7 @@ export default function RootLayout({ children }) {
                   GitHub
                 </a>
                 <a
-                  href="https://www.facebook.com/glenn.luna.73/"
+                  href="https://www.facebook.com/glenn.luna.100104"
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 transition hover:text-white"
