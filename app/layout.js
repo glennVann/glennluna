@@ -1,4 +1,5 @@
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import CookieConsentBanner from "./cookie-consent-banner";
 import "./globals.css";
 
 const siteUrl = "https://glennluna.bindaddy.ca";
@@ -161,6 +162,7 @@ export default function RootLayout({ children }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
         {children}
+        <CookieConsentBanner />
         <footer className="border-t border-black/8 bg-[#152321] text-white">
           <div className="mx-auto grid w-full max-w-7xl gap-8 px-6 py-10 sm:px-10 lg:grid-cols-[1.1fr_0.9fr_0.8fr] lg:px-12">
             <div>

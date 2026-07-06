@@ -5,21 +5,37 @@ export const projects = [
     category: "Healthcare Services Platform",
     status: "Ongoing Project",
     summary:
-      "An ongoing home care website project designed to build trust quickly, communicate services clearly, and make it easy for families to take the next step.",
+      "An ongoing home care platform project that includes a trust-focused website plus Android and iOS mobile app development to help families connect with care services more easily.",
     highlights: [
       "Clear service presentation for families and caregivers",
       "Professional visual tone that supports trust and credibility",
       "Responsive layout optimized for mobile and desktop browsing",
+      "Android and iOS mobile app development for on-the-go access",
     ],
     features: [
       "Service pages for home care support and caregiver information",
       "Clear contact and inquiry paths for families seeking care",
       "Mobile-friendly layout for easy access across devices",
       "Trust-focused presentation with clean, professional design",
+      "Android mobile app development for accessible care-related workflows",
+      "iOS mobile app development for a polished cross-platform experience",
     ],
-    technologies: ["Next.js", "Responsive Design", "Content Strategy"],
+    technologies: [
+      "Next.js",
+      "Responsive Design",
+      "Content Strategy",
+      "Android App Development",
+      "iOS App Development",
+    ],
     seoDescription:
-      "Healthcare website project focused on trust, responsive design, service clarity, and smooth inquiry paths for families seeking home care support.",
+      "Healthcare platform project covering website delivery, Android and iOS mobile app development, responsive design, service clarity, and inquiry paths for families seeking home care support.",
+    architectureImage: {
+      src: "/tighomecare-platform-topology.png",
+      alt: "Tighomecare customer-facing digital platform topology diagram",
+      title: "Platform Topology",
+      caption:
+        "High-level architecture illustrating the customer-facing web platform, mobile access paths, authentication, backend services, storage, and operational workflows supporting Tighomecare.",
+    },
     url: "https://tighomecare.ca",
   },
   {
@@ -71,7 +87,7 @@ export const projects = [
   {
     slug: "stackwatch",
     name: "Stackwatch",
-    category: "Website Monitoring SaaS MVP",
+    category: "Website Monitoring SaaS Platform",
     status: "Ongoing Project",
     summary:
       "An ongoing monitoring product built for agencies and operators who need visibility into uptime, SEO issues, conversion risks, and site performance across multiple websites.",
@@ -86,9 +102,16 @@ export const projects = [
       "Cloudflare integration path for traffic and page-load analytics",
       "MariaDB-backed SaaS foundation for users, organizations, alerts, and subscriptions",
     ],
-    technologies: ["SaaS MVP", "Monitoring", "SEO Checks", "MariaDB"],
+    technologies: ["SaaS Platform", "Monitoring", "SEO Checks", "MariaDB"],
     seoDescription:
-      "Website monitoring SaaS MVP for uptime, SEO issues, SSL health, conversion risks, and multi-site visibility.",
+      "Website monitoring SaaS platform for uptime, SEO issues, SSL health, conversion risks, and multi-site visibility.",
+    architectureImage: {
+      src: "/stackwatch-topology-map-v2.png",
+      alt: "Stackwatch SaaS website monitoring platform topology map",
+      title: "Monitoring Platform Topology",
+      caption:
+        "System architecture showing the Stackwatch SaaS dashboard, monitoring engine, alerting workflows, data layer, client website checks, and supporting cloud infrastructure.",
+    },
     url: null,
   },
   {

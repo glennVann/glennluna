@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectBySlug, projects } from "../project-data";
@@ -6,8 +7,9 @@ export function generateStaticParams() {
   return projects.map((project) => ({ slug: project.slug }));
 }
 
-export function generateMetadata({ params }) {
-  const project = getProjectBySlug(params.slug);
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+  const project = getProjectBySlug(slug);
 
   if (!project) {
     return {
@@ -35,8 +37,9 @@ export function generateMetadata({ params }) {
   };
 }
 
-export default function ProjectDetailPage({ params }) {
-  const project = getProjectBySlug(params.slug);
+export default async function ProjectDetailPage({ params }) {
+  const { slug } = await params;
+  const project = getProjectBySlug(slug);
 
   if (!project) {
     notFound();
@@ -159,6 +162,28 @@ export default function ProjectDetailPage({ params }) {
           </div>
         </div>
       </section>
+
+      {project.architectureImage ? (
+        <section className="mx-auto w-full max-w-7xl px-6 pb-16 sm:px-10 lg:px-12 lg:pb-20">
+          <div className="fade-up rounded-[2.25rem] border border-black/8 bg-white/78 p-8 shadow-[0_24px_60px_rgba(21,35,33,0.08)] backdrop-blur sm:p-10">
+            <p className="font-mono text-xs uppercase tracking-[0.3em] text-black/45">
+              {project.architectureImage.title}
+            </p>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-black/68">
+              {project.architectureImage.caption}
+            </p>
+            <div className="mt-8 overflow-hidden rounded-[1.75rem] border border-black/8 bg-[#fffdf8] shadow-[0_20px_50px_rgba(21,35,33,0.08)]">
+              <Image
+                src={project.architectureImage.src}
+                alt={project.architectureImage.alt}
+                width={1536}
+                height={1024}
+                className="h-auto w-full object-cover"
+              />
+            </div>
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -352,14 +352,9 @@ export default function QuoteForm() {
 
         <div className="flex flex-col gap-3 border-t border-black/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="max-w-xl">
-            <p className="text-sm leading-7 text-black/60">
-              This form sends your quote request directly to `info@bindaddy.ca`
-              from the site using the server email configuration and Turnstile
-              verification.
-            </p>
             {submitState.message ? (
               <p
-                className={`mt-2 text-sm leading-7 ${
+                className={`text-sm leading-7 ${
                   submitState.type === "success"
                     ? "text-[#1b5e59]"
                     : "text-[#b94a48]"
