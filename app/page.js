@@ -1,6 +1,36 @@
 import Image from "next/image";
 import Link from "next/link";
 
+const linkedInIcon = (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    className="h-4 w-4 fill-current"
+  >
+    <path d="M6.94 8.5H3.56V20h3.38zm-1.69-5.8A1.96 1.96 0 1 0 5.3 6.62a1.96 1.96 0 0 0-.05-3.92M20 20h-3.37v-5.59c0-1.33-.03-3.05-1.86-3.05s-2.15 1.45-2.15 2.95V20H9.25V8.5h3.24v1.57h.05a3.55 3.55 0 0 1 3.19-1.75c3.41 0 4.04 2.24 4.04 5.15z" />
+  </svg>
+);
+
+const githubIcon = (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    className="h-4 w-4 fill-current"
+  >
+    <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.41-4.04-1.41-.55-1.38-1.34-1.74-1.34-1.74-1.09-.74.08-.72.08-.72 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.8 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.94 0-1.31.47-2.39 1.24-3.23-.12-.31-.54-1.53.12-3.2 0 0 1.01-.32 3.3 1.23A11.4 11.4 0 0 1 12 6.3c1.02 0 2.05.14 3.01.41 2.28-1.55 3.29-1.23 3.29-1.23.66 1.67.24 2.89.12 3.2.77.84 1.24 1.92 1.24 3.23 0 4.62-2.8 5.64-5.48 5.93.43.37.82 1.1.82 2.22v3.29c0 .32.21.69.83.58A12 12 0 0 0 12 .5" />
+  </svg>
+);
+
+const facebookIcon = (
+  <svg
+    aria-hidden="true"
+    viewBox="0 0 24 24"
+    className="h-4 w-4 fill-current"
+  >
+    <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.88 3.77-3.88 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.62.77-1.62 1.56V12h2.76l-.44 2.89h-2.32v6.99A10 10 0 0 0 22 12" />
+  </svg>
+);
+
 export const metadata = {
   description:
     "Glenn Luna builds Next.js websites, custom web apps, technical SEO improvements, server setups, networking solutions, and maintainable full-stack software.",
@@ -52,6 +82,7 @@ const strengths = [
   "JavaScript-first full-stack development",
   "Next.js application architecture",
   "REST API design and integration",
+  "Domain management and DNS setup",
   "Server setup and deployment workflows",
   "Layer 2 and Layer 3 network configuration",
   "Custom wireless and fiber optic network setup",
@@ -62,6 +93,11 @@ const strengths = [
 ];
 
 const serviceAreas = [
+  {
+    title: "Domain Management and Setup",
+    description:
+      "Domain setup, DNS record configuration, subdomain routing, nameserver updates, and practical domain management for live websites and applications.",
+  },
   {
     title: "Server Setup",
     description:
@@ -143,6 +179,8 @@ const aboutMePoints = [
   "I enjoy building software that feels polished to users and manageable behind the scenes.",
   "My work usually sits at the intersection of product thinking, clean engineering, and practical business needs.",
   "I am especially comfortable helping projects move from idea to working system with clear structure and dependable execution.",
+  "I studied at SAIT and completed a Diploma in Software Development, which strengthened both my technical foundation and practical development workflow.",
+  "I also bring a background in Telecom Engineering, which supports the networking, infrastructure, and systems side of my work.",
 ];
 
 export default function Home() {
@@ -151,50 +189,7 @@ export default function Home() {
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(27,94,89,0.18),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(221,140,54,0.16),_transparent_22%),linear-gradient(180deg,_#f7f3ec_0%,_#fffdfa_46%,_#f4efe6_100%)]" />
       <div className="absolute inset-x-0 top-0 -z-10 h-96 bg-[linear-gradient(to_bottom,_rgba(255,255,255,0.72),_transparent)]" />
 
-      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-8 sm:px-10 lg:px-12">
-        <header className="fade-up flex items-center justify-between border-b border-black/8 pb-5">
-          <div className="flex items-center gap-4">
-            <div className="overflow-hidden rounded-2xl border border-black/10 bg-[#07111f] shadow-[0_14px_32px_rgba(7,17,31,0.18)]">
-              <Image
-                src="/glenn-luna-logo.png"
-                alt="Glenn Luna logo"
-                width={64}
-                height={64}
-                className="h-14 w-14 object-cover sm:h-16 sm:w-16"
-                priority
-              />
-            </div>
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-black/50">
-                Developer Profile
-              </p>
-              <h1 className="mt-2 text-lg font-semibold text-[#152321]">
-                Glenn Luna
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="#about"
-              className="rounded-full border border-[#152321]/15 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] shadow-[0_12px_28px_rgba(21,35,33,0.08)] transition hover:-translate-y-0.5 hover:bg-white"
-            >
-              About Me
-            </a>
-            <Link
-              href="/quote"
-              className="rounded-full bg-[#152321] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(21,35,33,0.12)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-            >
-              Request Quote
-            </Link>
-            <a
-              href="#contact"
-              className="rounded-full border border-[#152321]/15 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] shadow-[0_12px_28px_rgba(21,35,33,0.08)] transition hover:-translate-y-0.5 hover:bg-white"
-            >
-              Contact
-            </a>
-          </div>
-        </header>
-
+      <section className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-10 sm:px-10 lg:px-12">
         <div className="grid flex-1 gap-12 py-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-16">
           <section className="fade-up space-y-8">
             <div className="inline-flex items-center rounded-full border border-[#1b5e59]/20 bg-[#1b5e59]/8 px-4 py-2 font-mono text-xs uppercase tracking-[0.24em] text-[#1b5e59]">
@@ -447,6 +442,12 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            <Link
+              href="/about"
+              className="mt-6 inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-5 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5"
+            >
+              Open Full About Page
+            </Link>
           </div>
         </div>
       </section>
@@ -548,8 +549,9 @@ export default function Home() {
               </h3>
               <p className="mt-4 text-base leading-8 text-black/68">
                 Share your goals, timeline, and budget range through a dedicated
-                quote request page. Your inquiry will be prepared and sent to
-                `info@bindaddy.ca`.
+                quote request page. Domain management, DNS setup, and routing
+                support can be included as part of the project. Your inquiry
+                will be prepared and sent to `info@bindaddy.ca`.
               </p>
             </div>
             <Link
@@ -600,9 +602,28 @@ export default function Home() {
                 href="https://www.linkedin.com/in/glenn-luna-62b1ba285/"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/12"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/14 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/12"
               >
+                {linkedInIcon}
                 LinkedIn Profile
+              </a>
+              <a
+                href="https://github.com/glennVann"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/14 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/12"
+              >
+                {githubIcon}
+                GitHub
+              </a>
+              <a
+                href="https://www.facebook.com/glenn.luna.73/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/14 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/12"
+              >
+                {facebookIcon}
+                Facebook
               </a>
             </div>
           </div>
