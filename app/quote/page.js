@@ -3,20 +3,20 @@ import QuoteForm from "./quote-form";
 export const metadata = {
   title: "Project Quote",
   description:
-    "Request a project quote from Glenn Luna for websites, platforms, and custom software work.",
+    "Request a project quote from Glenn Luna for websites, web apps, platforms, and custom software work.",
   alternates: {
     canonical: "/quote",
   },
   openGraph: {
     title: "Project Quote | Glenn Luna",
     description:
-      "Request a quote for websites, dashboards, POS systems, server setup, networking, and custom software development.",
+      "Request a quote for websites, dashboards, POS systems, infrastructure setup, and custom software development.",
     url: "https://glennluna.bindaddy.ca/quote",
   },
   twitter: {
     title: "Project Quote | Glenn Luna",
     description:
-      "Start a project quote for custom software, websites, server setup, and networking work.",
+      "Start a quote for custom software, websites, server setup, and networking work.",
   },
 };
 
@@ -34,12 +34,12 @@ export default function QuotePage() {
             <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#152321] sm:text-5xl lg:text-6xl">
               Tell me about your project and I&apos;ll help shape the next step.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-black/68">
-              Use this form to prepare a project inquiry for websites, internal
-              tools, POS systems, dashboards, server setup, networking, file
-              server setup, and custom platforms. It sends directly through the
-              site and is protected with Turnstile verification.
-            </p>
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-black/68">
+            Use this form if you want help with a website, internal tool, POS
+            system, dashboard, infrastructure setup, or a custom platform. The
+            more context you share, the easier it is for me to give you a
+            useful next step.
+          </p>
           </div>
         </div>
       </section>

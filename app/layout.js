@@ -7,7 +7,7 @@ import "./globals.css";
 const siteUrl = "https://glennluna.bindaddy.ca";
 const siteTitle = "Glenn Luna | Software Developer";
 const siteDescription =
-  "Glenn Luna builds modern websites, Next.js applications, custom software, server setups, networking solutions, and technical SEO improvements for growing businesses.";
+  "Glenn Luna builds websites, web apps, and reliable digital systems with a focus on usability, SEO, infrastructure, and maintainable code.";
 const serviceAreas = [
   "Web Development",
   "Next.js Development",
@@ -257,8 +257,8 @@ export default function RootLayout({ children }) {
                 Glenn Luna
               </p>
               <p className="mt-4 max-w-md text-sm leading-7 text-white/72">
-                Software developer focused on modern websites, custom software,
-                technical SEO, server setup, and dependable product delivery.
+                Software developer focused on websites, custom software,
+                technical SEO, infrastructure support, and dependable delivery.
               </p>
             </div>
 
@@ -327,7 +327,7 @@ export default function RootLayout({ children }) {
           <div className="border-t border-white/8">
             <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 py-4 text-sm text-white/56 sm:px-10 lg:flex-row lg:items-center lg:justify-between lg:px-12">
               <p>&copy; {currentYear} Glenn Luna. All rights reserved.</p>
-              <p>Built with Next.js, product focus, and clean execution.</p>
+              <p>Built with care, clear thinking, and solid execution.</p>
             </div>
           </div>
         </footer>

@@ -33,20 +33,20 @@ const facebookIcon = (
 
 export const metadata = {
   description:
-    "Glenn Luna builds Next.js websites, custom web apps, technical SEO improvements, server setups, networking solutions, and maintainable full-stack software.",
+    "Glenn Luna builds websites, web apps, and reliable digital systems with a strong focus on usability, SEO, infrastructure, and maintainable code.",
   alternates: {
     canonical: "/",
   },
   openGraph: {
     title: "Glenn Luna | Software Developer",
     description:
-      "Modern websites, custom web apps, technical SEO, server setup, and networking support built with a full-stack product mindset.",
+      "Websites, custom apps, SEO, infrastructure, and practical software delivery built with a thoughtful full-stack approach.",
     url: "https://glennluna.bindaddy.ca",
   },
   twitter: {
     title: "Glenn Luna | Software Developer",
     description:
-      "Next.js development, technical SEO, infrastructure setup, and full-stack product delivery.",
+      "Web development, technical SEO, infrastructure support, and dependable product delivery.",
   },
 };
 
@@ -54,27 +54,27 @@ const focusAreas = [
   {
     title: "Frontend Engineering",
     description:
-      "Responsive, high-quality interfaces with thoughtful UX, strong accessibility, and maintainable component systems.",
+      "Clean, responsive interfaces that feel easy to use and stay maintainable as the product grows.",
   },
   {
     title: "Backend Development",
     description:
-      "Clean APIs, structured business logic, and reliable integrations that support product growth without adding chaos.",
+      "Practical backend work, clear business logic, and integrations that support real operations without creating extra complexity.",
   },
   {
     title: "Product Delivery",
     description:
-      "A practical engineering approach that balances speed, code quality, and collaboration across design and business goals.",
+      "A steady delivery style that balances speed, code quality, and the real goals behind the project.",
   },
   {
     title: "SEO and Maintenance",
     description:
-      "Search visibility improvements, technical SEO fundamentals, and ongoing web application maintenance that keep products healthy after launch.",
+      "Technical SEO, performance improvements, and ongoing maintenance to keep websites useful after launch.",
   },
   {
     title: "Infrastructure Setup",
     description:
-      "Server setup, custom Layer 2 and Layer 3 network configuration, wireless deployment, fiber optic connectivity, deployment workflows, and file server structure that support reliable day-to-day operations.",
+      "Server setup, networking, deployment workflows, and file server planning that support reliable day-to-day operations.",
   },
 ];
 
@@ -96,27 +96,27 @@ const serviceAreas = [
   {
     title: "Domain Management and Setup",
     description:
-      "Domain setup, DNS record configuration, subdomain routing, nameserver updates, and practical domain management for live websites and applications.",
+      "Domain setup, DNS records, subdomain routing, nameserver changes, and the practical work needed to keep live websites running smoothly.",
   },
   {
     title: "Server Setup",
     description:
-      "Application deployment, VPS setup, reverse proxy configuration, and production-ready runtime structure.",
+      "Application deployment, VPS setup, reverse proxy configuration, and a clean production-ready environment.",
   },
   {
     title: "Networking",
     description:
-      "Custom Layer 2 and Layer 3 network configuration, wireless setup, fiber optic connectivity, domain routing, DNS planning, internal connectivity, and practical infrastructure setup for live systems.",
+      "Layer 2 and Layer 3 networking, wireless setup, fiber connectivity, DNS planning, and the internal setup needed to support live systems.",
   },
   {
     title: "File Server Setup",
     description:
-      "Shared storage organization, operational folder structures, and file workflow planning for business teams.",
+      "Shared storage setup, folder structure planning, and file workflows that make day-to-day work easier for teams.",
   },
   {
     title: "SEO and Maintenance",
     description:
-      "Technical SEO support, performance upkeep, bug fixes, updates, and ongoing maintenance for live web applications.",
+      "SEO support, bug fixes, updates, and ongoing care for live websites and web applications.",
   },
 ];
 
@@ -124,28 +124,28 @@ const featuredProjects = [
   {
     title: "Tighomecare.ca",
     summary:
-      "An ongoing care services website project focused on trust, clarity, and a smooth path for families exploring home care support.",
+      "An ongoing care services project focused on making it easier for families to understand the services, build trust quickly, and reach out with confidence.",
     tags: ["Ongoing", "Healthcare", "Responsive Design"],
     href: "/projects",
   },
   {
     title: "bubbleteabrewers.ca",
     summary:
-      "An ongoing POS and web app project for Bubble Tea Brewers that includes converting the site from PHP to Next.js and integrating the POS system with the backend for smoother operations.",
+      "An ongoing POS and web app project for Bubble Tea Brewers, including a move from PHP to Next.js and better backend integration to support smoother day-to-day operations.",
     tags: ["Ongoing", "POS", "Backend Integration"],
     href: "/projects",
   },
   {
     title: "GitHub Portfolio",
     summary:
-      "A public collection of development work showcasing web applications, full-stack builds, and ongoing software projects.",
+      "A public collection of my code and project work across websites, web apps, and full-stack builds.",
     tags: ["GitHub", "Code Portfolio", "Open Source"],
     href: "/projects",
   },
   {
     title: "bindaddy.ca",
     summary:
-      "A completed digital platform built around customer experience, account flows, and scalable product operations.",
+      "A completed platform built around customer experience, account access, and the day-to-day flow of a real product.",
     tags: ["Completed", "Account Experience", "Full-Stack"],
     href: "/projects",
   },
@@ -176,11 +176,11 @@ const stackGroups = [
 ];
 
 const aboutMePoints = [
-  "I enjoy building software that feels polished to users and manageable behind the scenes.",
-  "My work usually sits at the intersection of product thinking, clean engineering, and practical business needs.",
-  "I am especially comfortable helping projects move from idea to working system with clear structure and dependable execution.",
-  "I studied at SAIT and completed a Diploma in Software Development, which strengthened both my technical foundation and practical development workflow.",
-  "I also bring a background in Telecom Engineering, which supports the networking, infrastructure, and systems side of my work.",
+  "I like building software that feels clear and polished for users, while still being practical to manage behind the scenes.",
+  "Most of my work sits between product thinking, clean engineering, and the real business needs that shape a project.",
+  "I’m comfortable taking a project from an early idea to a working system with structure, clarity, and steady execution.",
+  "I studied at SAIT and completed a Diploma in Software Development, which strengthened both my technical skills and my hands-on workflow.",
+  "I also bring a background in Telecom Engineering, which helps a lot when a project involves networking, infrastructure, or system planning.",
 ];
 
 export default function Home() {
@@ -202,11 +202,10 @@ export default function Home() {
                 foundations.
               </h2>
               <p className="max-w-2xl text-lg leading-8 text-black/68 sm:text-xl">
-                I create modern websites, Next.js applications, custom web
-                software, technical SEO improvements, and practical
-                infrastructure setups. My focus is on building digital products
-                that feel professional, perform well, and stay maintainable as
-                business needs evolve.
+                I build websites, web applications, and digital systems that
+                are meant to be useful in the real world. My focus is on clean
+                user experience, dependable code, practical infrastructure, and
+                work that stays easy to manage as the business grows.
               </p>
             </div>
 
@@ -231,8 +230,8 @@ export default function Home() {
                   Focus
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Next.js web apps, scalable interfaces, technical SEO, and
-                  dependable product delivery.
+                  Websites, custom web apps, technical SEO, and dependable
+                  product delivery.
                 </p>
               </div>
               <div className="rounded-[1.75rem] border border-black/8 bg-white/72 p-5 shadow-[0_18px_45px_rgba(21,35,33,0.08)] backdrop-blur">
@@ -240,8 +239,8 @@ export default function Home() {
                   Strength
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Balancing thoughtful design, technical quality, and business
-                  practicality.
+                  Balancing good design, solid engineering, and what the
+                  business actually needs.
                 </p>
               </div>
               <div className="rounded-[1.75rem] border border-black/8 bg-white/72 p-5 shadow-[0_18px_45px_rgba(21,35,33,0.08)] backdrop-blur">
@@ -249,8 +248,8 @@ export default function Home() {
                   Approach
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Clear communication, reliable execution, and maintainable
-                  code from planning through launch.
+                  Clear communication, steady execution, and maintainable code
+                  from planning through launch.
                 </p>
               </div>
             </div>
@@ -285,8 +284,8 @@ export default function Home() {
                       Specialties
                     </p>
                     <p className="mt-3 text-sm leading-7 text-white/78">
-                      Product engineering, API integration, deployment
-                      planning, and scalable UI systems.
+                      Product development, API integration, deployment
+                      planning, and UI systems built to last.
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -294,8 +293,8 @@ export default function Home() {
                       Value
                     </p>
                     <p className="mt-3 text-sm leading-7 text-white/78">
-                      Professional execution across software, hosting,
-                      networking, and user experience.
+                      Reliable execution across software, hosting, networking,
+                      and user experience.
                     </p>
                   </div>
                 </div>
@@ -304,9 +303,9 @@ export default function Home() {
                     Working Style
                   </p>
                   <p className="mt-3 text-sm leading-7 text-white/78">
-                    I enjoy turning complex requirements into clear product
-                    decisions, stable codebases, reliable infrastructure, and
-                    interfaces that look intentional on every screen size.
+                    I like turning complex requirements into clear product
+                    decisions, stable code, reliable infrastructure, and
+                    interfaces that feel intentional on every screen size.
                   </p>
                 </div>
               </div>
@@ -383,10 +382,10 @@ export default function Home() {
             A developer who cares about both the build and the outcome.
           </h3>
           <p className="mt-5 text-base leading-8 text-black/68">
-            I approach software development as a mix of engineering discipline
-            and product thinking. That means writing code that is easy to
-            maintain, solving the right problems, and making sure the final
-            experience feels complete to the people using it.
+            I see software development as a mix of engineering discipline and
+            practical problem-solving. For me, good work means building
+            something that is useful, maintainable, and complete from the
+            user&apos;s point of view.
           </p>
         </div>
 
@@ -421,10 +420,10 @@ export default function Home() {
               reliability, and business practicality.
             </h3>
             <p className="mt-5 text-base leading-8 text-white/76">
-              I&apos;m Glenn Luna, a software developer focused on modern web
+              I&apos;m Glenn Luna, a software developer focused on web
               applications, technical SEO, infrastructure support, and
-              maintainable product delivery. I like creating systems that look
-              intentional on the surface and stay dependable as they grow.
+              maintainable delivery. I like building systems that feel clean to
+              use and stay dependable as they grow.
             </p>
           </div>
 
@@ -548,10 +547,10 @@ export default function Home() {
                 Need a website, platform, or custom software build?
               </h3>
               <p className="mt-4 text-base leading-8 text-black/68">
-                Share your goals, timeline, and budget range through a dedicated
-                quote request page. Domain management, DNS setup, and routing
-                support can be included as part of the project. Your inquiry
-                will be prepared and sent to `info@bindaddy.ca`.
+                If you already know what you want to build, send over the
+                details and I can help shape the next step. Domain setup, DNS,
+                routing, and infrastructure support can be included when
+                needed.
               </p>
             </div>
             <Link

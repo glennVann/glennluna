@@ -5,20 +5,20 @@ export const projects = [
     category: "Healthcare Services Platform",
     status: "Ongoing Project",
     summary:
-      "An ongoing home care platform project that includes a trust-focused website plus Android and iOS mobile app development to help families connect with care services more easily.",
+      "An ongoing home care project that includes a trust-focused website and mobile app work to help families understand services and connect more easily.",
     highlights: [
       "Clear service presentation for families and caregivers",
-      "Professional visual tone that supports trust and credibility",
-      "Responsive layout optimized for mobile and desktop browsing",
-      "Android and iOS mobile app development for on-the-go access",
+      "A calm, trustworthy visual style that fits the audience",
+      "Responsive browsing across desktop and mobile",
+      "Mobile app support for easier access on the go",
     ],
     features: [
       "Service pages for home care support and caregiver information",
-      "Clear contact and inquiry paths for families seeking care",
+      "Simple contact and inquiry paths for families looking for help",
       "Mobile-friendly layout for easy access across devices",
-      "Trust-focused presentation with clean, professional design",
-      "Android mobile app development for accessible care-related workflows",
-      "iOS mobile app development for a polished cross-platform experience",
+      "A clean presentation designed to build trust quickly",
+      "Android app development for care-related workflows",
+      "iOS app development for a smoother cross-platform experience",
     ],
     technologies: [
       "Next.js",
@@ -28,7 +28,7 @@ export const projects = [
       "iOS App Development",
     ],
     seoDescription:
-      "Healthcare platform project covering website delivery, Android and iOS mobile app development, responsive design, service clarity, and inquiry paths for families seeking home care support.",
+      "Healthcare project covering website delivery, mobile app support, responsive design, clear service presentation, and inquiry paths for families seeking home care support.",
     architectureImage: {
       src: "/tighomecare-platform-topology.png",
       alt: "Tighomecare customer-facing digital platform topology diagram",
@@ -44,21 +44,21 @@ export const projects = [
     category: "Real Estate Booking Platform",
     status: "Ongoing Project",
     summary:
-      "An ongoing real estate booking platform designed to support property discovery, agent presentation, and private visit scheduling in a streamlined web experience.",
+      "An ongoing real estate booking project built to support property discovery, agent presentation, and private visit scheduling in a simple web experience.",
     highlights: [
       "Landing page built around listings and agent presentation",
       "Private property visit booking flow for prospective clients",
-      "Bookings dashboard for managing submitted requests",
+      "A dashboard for managing submitted booking requests",
     ],
     features: [
-      "Agent profile presentation for a more trust-driven real estate experience",
+      "Agent profile presentation that helps build trust",
       "Property visit request form for private booking inquiries",
       "Dashboard workflow for reviewing and managing bookings",
-      "Structured listing photo support with room for future database growth",
+      "Structured listing photo support with room for future growth",
     ],
     technologies: ["Next.js", "Booking Workflows", "Dashboard UX"],
     seoDescription:
-      "Real estate booking platform with listing discovery, agent presentation, and private property visit scheduling workflows.",
+      "Real estate booking platform with listing discovery, agent presentation, and private property visit scheduling.",
     url: null,
   },
   {
@@ -90,21 +90,21 @@ export const projects = [
     category: "Website Monitoring SaaS Platform",
     status: "Ongoing Project",
     summary:
-      "An ongoing monitoring product built for agencies and operators who need visibility into uptime, SEO issues, conversion risks, and site performance across multiple websites.",
+      "An ongoing monitoring product built for agencies and operators who need a clearer view of uptime, SEO issues, conversion risks, and site performance across multiple websites.",
     highlights: [
-      "Multi-site monitoring dashboard with portfolio-level risk views",
+      "Multi-site monitoring dashboard with portfolio-level visibility",
       "Checks for uptime, response speed, SSL, SEO basics, and conversion signals",
-      "SEO Lab support and SaaS-ready database foundation for growth",
+      "A solid data foundation for future growth",
     ],
     features: [
       "Add-site workflow for agency and client website monitoring",
-      "Run-all and per-site checks for operational visibility",
+      "Run-all and per-site checks for day-to-day visibility",
       "Cloudflare integration path for traffic and page-load analytics",
-      "MariaDB-backed SaaS foundation for users, organizations, alerts, and subscriptions",
+      "MariaDB-backed foundation for users, organizations, alerts, and subscriptions",
     ],
     technologies: ["SaaS Platform", "Monitoring", "SEO Checks", "MariaDB"],
     seoDescription:
-      "Website monitoring SaaS platform for uptime, SEO issues, SSL health, conversion risks, and multi-site visibility.",
+      "Website monitoring platform for uptime, SEO issues, SSL health, conversion risks, and multi-site visibility.",
     architectureImage: {
       src: "/stackwatch-topology-map-v2.png",
       alt: "Stackwatch SaaS website monitoring platform topology map",
@@ -120,24 +120,24 @@ export const projects = [
     category: "POS and Web App",
     status: "Ongoing Project",
     summary:
-      "An ongoing POS and web application project for Bubble Tea Brewers, including a site conversion from PHP to Next.js and integration of the POS system with the backend while streamlining operations and supporting a polished customer-facing digital experience.",
+      "An ongoing POS and web application project for Bubble Tea Brewers, including a move from PHP to Next.js and POS integration with the backend to support smoother operations.",
     highlights: [
-      "Conversion of the existing website experience from PHP to Next.js",
-      "POS workflows designed for practical day-to-day business operations",
-      "Integration of the POS system with backend workflows and data handling",
-      "Web app experience that supports brand presentation and usability",
-      "Built with scalability in mind for future product and operational needs",
+      "Moving the website from PHP to Next.js",
+      "POS workflows shaped around day-to-day business operations",
+      "Backend integration for POS data and system workflows",
+      "A cleaner customer-facing web experience",
+      "A stronger foundation for future growth",
     ],
     features: [
       "Modernized frontend architecture through PHP-to-Next.js migration",
       "POS functionality aligned with real business operations",
-      "Backend integration for completed sales, operational data, and system workflows",
+      "Backend integration for sales data and operational workflows",
       "Customer-facing web experience with a cleaner, more maintainable stack",
-      "Foundation for future content, product, and operational growth",
+      "Room for future content, product, and operational growth",
     ],
     technologies: ["Next.js", "POS Integration", "Backend Workflows"],
     seoDescription:
-      "Bubble Tea Brewers POS and website project with PHP to Next.js migration, backend integration, and customer-facing web app improvements.",
+      "Bubble Tea Brewers POS and website project with a PHP to Next.js migration, backend integration, and customer-facing improvements.",
     url: "https://bubbleteabrewers.ca",
   },
   {
@@ -146,16 +146,16 @@ export const projects = [
     category: "Code Portfolio",
     status: "Active Projects",
     summary:
-      "A public GitHub portfolio that brings together development work across web applications, full-stack projects, and practical product builds.",
+      "A public GitHub portfolio that brings together my development work across web applications, full-stack projects, and practical builds.",
     highlights: [
       "Public repositories that show real implementation work",
       "A mix of frontend, backend, and full-stack projects",
-      "Ongoing development and experimentation across products",
+      "Ongoing development and experimentation across different ideas",
     ],
     features: [
       "Source code available for technical review",
       "Project variety across different business and product needs",
-      "Visible coding style, structure, and implementation approach",
+      "A visible look at coding style, structure, and implementation approach",
       "A central place to explore more of my software work",
     ],
     technologies: ["GitHub", "Open Source", "Portfolio Presentation"],
@@ -169,21 +169,21 @@ export const projects = [
     category: "Customer-Facing Digital Platform",
     status: "Completed Project",
     summary:
-      "A completed modern web platform focused on customer journeys, account experiences, and product operations, with an emphasis on clarity, usability, and scalable delivery.",
+      "A completed digital platform focused on customer journeys, account experience, and the operational flow behind a real product.",
     highlights: [
-      "Customer-centric flows for discovery, booking, and account use",
-      "Full-stack implementation thinking across frontend and backend",
-      "Built to support growth with maintainable product foundations",
+      "Customer-focused flows for discovery, booking, and account use",
+      "Full-stack thinking across frontend and backend",
+      "Built on a maintainable foundation that can grow over time",
     ],
     features: [
       "Account-based user experience for customer access and management",
-      "Booking and service flow support for product interactions",
-      "Frontend and backend integration for scalable platform behavior",
+      "Booking and service flows that support real use cases",
+      "Frontend and backend integration for stable platform behavior",
       "Structured product pages and operational workflows",
     ],
     technologies: ["Full-Stack Platform", "Account Experience", "Scalable Delivery"],
     seoDescription:
-      "Customer-facing digital platform with account flows, booking support, product operations, and scalable full-stack architecture.",
+      "Customer-facing digital platform with account flows, booking support, product operations, and stable full-stack architecture.",
     url: "https://bindaddy.ca",
   },
 ];

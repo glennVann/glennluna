@@ -4,23 +4,23 @@ const values = [
   {
     title: "Product Thinking",
     description:
-      "I like building software that solves real problems clearly, instead of adding complexity for its own sake.",
+      "I want the work to solve a real problem clearly, not just add features for the sake of it.",
   },
   {
     title: "Reliable Delivery",
     description:
-      "My focus is not only getting features working, but making sure the result is stable, maintainable, and practical to run.",
+      "For me, success is not just getting features live. It also means the result is stable, maintainable, and practical to run.",
   },
   {
     title: "Technical Range",
     description:
-      "I work across modern frontend development, backend logic, technical SEO, server setup, DNS, networking, and deployment workflows.",
+      "I work across frontend development, backend logic, technical SEO, server setup, DNS, networking, and deployment workflows.",
   },
 ];
 
 const workingStyle = [
-  "I enjoy taking a project from rough idea to a structured, working system.",
-  "I care about interfaces looking intentional and the underlying code staying manageable.",
+  "I enjoy taking a project from a rough idea to a structured, working system.",
+  "I care about the interface feeling intentional and the code staying manageable over time.",
   "I try to balance business goals, user experience, and technical quality in the same build.",
 ];
 
@@ -28,26 +28,26 @@ const education = {
   school: "Southern Alberta Institute of Technology (SAIT)",
   credential: "Diploma in Software Development",
   description:
-    "Formal software development training with a focus on practical application, technical foundations, and building production-ready digital systems.",
+    "A hands-on software development program that strengthened my technical foundation and helped shape the way I build practical, production-ready systems.",
 };
 
 export const metadata = {
   title: "About Me",
   description:
-    "Learn more about Glenn Luna, a software developer focused on web applications, technical SEO, infrastructure support, and dependable product delivery.",
+    "Learn more about Glenn Luna, a software developer focused on web applications, SEO, infrastructure support, and dependable delivery.",
   alternates: {
     canonical: "/about",
   },
   openGraph: {
     title: "About Me | Glenn Luna",
     description:
-      "Software developer profile covering product thinking, technical range, and a practical approach to modern web projects.",
+      "A closer look at Glenn Luna's background, working style, and practical approach to building software.",
     url: "https://glennluna.bindaddy.ca/about",
   },
   twitter: {
     title: "About Me | Glenn Luna",
     description:
-      "Learn more about Glenn Luna’s approach to software, SEO, infrastructure, and product delivery.",
+      "Learn more about Glenn Luna's approach to software, infrastructure, and product delivery.",
   },
 };
 
@@ -67,12 +67,10 @@ export default function AboutPage() {
               and long-term maintainability.
             </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-black/68">
-              I&apos;m Glenn Luna. I build modern websites, custom web
-              applications, technical SEO improvements, infrastructure support,
-              and practical digital systems that are meant to work well beyond
-              launch day. I also bring a background in Telecom Engineering,
-              which supports the networking, connectivity, and systems side of
-              the work I do.
+              I&apos;m Glenn Luna. I build websites, web applications, and
+              digital systems that are meant to work well beyond launch day. I
+              also bring a background in Telecom Engineering, which helps on
+              the networking, connectivity, and systems side of the work I do.
             </p>
           </div>
           <Link
@@ -91,16 +89,16 @@ export default function AboutPage() {
           </p>
           <p className="mt-5 text-base leading-8 text-white/78">
             I approach development as a mix of engineering discipline and
-            product practicality. That means building interfaces people can use
-            easily, systems teams can maintain confidently, and delivery flows
-            that support real business goals.
+            practical product thinking. That means building interfaces people
+            can use easily, systems teams can maintain confidently, and
+            delivery flows that support real business goals.
           </p>
           <p className="mt-5 text-base leading-8 text-white/78">
             I enjoy projects that need both technical depth and clear judgment:
             web applications, platform builds, domain and DNS setup, server
-            delivery, technical SEO, and cross-functional execution from idea
-            to launch. My background in Telecom Engineering also gives me a
-            strong perspective on networking, connectivity, and infrastructure
+            delivery, technical SEO, and steady execution from idea to launch.
+            My Telecom Engineering background also gives me a strong
+            perspective on networking, connectivity, and infrastructure
             planning.
           </p>
         </div>
