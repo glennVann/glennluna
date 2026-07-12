@@ -9,6 +9,8 @@ export default function NavbarAuth() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [mode, setMode] = useState("login");
+  const [message, setMessage] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -48,6 +50,34 @@ export default function NavbarAuth() {
     dialogRef.current?.close();
   }
 
+  async function handleRegister(event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    setMessage("");
+    const formData = new FormData(event.currentTarget);
+    const password = formData.get("password");
+    if (password !== formData.get("confirmPassword")) {
+      setError("Passwords do not match.");
+      setSubmitting(false);
+      return;
+    }
+    const response = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: formData.get("email"), password }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(result.error || "Unable to create the account.");
+      setSubmitting(false);
+      return;
+    }
+    setMode("login");
+    setMessage("Account created. Check your email and confirm your address before signing in.");
+    setSubmitting(false);
+  }
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setMenuOpen(false);
@@ -84,7 +114,7 @@ export default function NavbarAuth() {
     <>
       <button
         type="button"
-        onClick={() => { setError(""); dialogRef.current?.showModal(); }}
+        onClick={() => { setMode("login"); setError(""); setMessage(""); dialogRef.current?.showModal(); }}
         className="rounded-full border border-[#152321]/18 bg-white px-4 py-2 text-sm font-semibold text-[#152321] hover:-translate-y-0.5 hover:bg-[#f4eee5]"
       >
         Login
@@ -94,21 +124,35 @@ export default function NavbarAuth() {
         onClick={(event) => { if (event.target === dialogRef.current) dialogRef.current.close(); }}
         className="m-auto w-[min(92vw,26rem)] rounded-3xl border border-black/10 bg-[#fffdfa] p-0 text-[#152321] shadow-[0_30px_90px_rgba(21,35,33,0.28)] backdrop:bg-[#07111f]/55 backdrop:backdrop-blur-sm"
       >
-        <form onSubmit={handleLogin} className="p-7 sm:p-8">
+        <form onSubmit={mode === "login" ? handleLogin : handleRegister} className="p-7 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-black/40">Account</p>
-              <h2 className="mt-2 text-2xl font-semibold">Welcome back</h2>
+              <h2 className="mt-2 text-2xl font-semibold">{mode === "login" ? "Welcome back" : "Create account"}</h2>
             </div>
             <button type="button" onClick={() => dialogRef.current?.close()} className="rounded-full border border-black/10 px-3 py-1.5 text-sm hover:bg-black/5" aria-label="Close login form">Close</button>
           </div>
           <label className="mt-7 block text-sm font-semibold" htmlFor="login-email">Email</label>
           <input id="login-email" name="email" type="email" autoComplete="email" required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
           <label className="mt-4 block text-sm font-semibold" htmlFor="login-password">Password</label>
-          <input id="login-password" name="password" type="password" autoComplete="current-password" required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
+          <input id="login-password" name="password" type="password" minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
+          {mode === "register" && (
+            <>
+              <label className="mt-4 block text-sm font-semibold" htmlFor="register-confirm-password">Confirm password</label>
+              <input id="register-confirm-password" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
+            </>
+          )}
+          {message && <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}
           {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <button type="submit" disabled={submitting} className="mt-6 w-full rounded-2xl bg-[#152321] px-4 py-3 font-semibold text-white hover:bg-[#0f1a18] disabled:cursor-wait disabled:opacity-60">
-            {submitting ? "Signing in…" : "Sign in"}
+            {submitting ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode((value) => value === "login" ? "register" : "login"); setError(""); setMessage(""); }}
+            className="mt-3 w-full rounded-2xl px-4 py-2 text-sm font-semibold text-[#1b5e59] hover:bg-[#1b5e59]/7"
+          >
+            {mode === "login" ? "Need an account? Register" : "Already registered? Sign in"}
           </button>
         </form>
       </dialog>
