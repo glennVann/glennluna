@@ -19,8 +19,10 @@
 
 # production
 /build
-/backend/bin/
-/backend/obj/
+
+# .NET build artifacts
+**/bin/
+**/obj/
 
 # misc
 .DS_Store
