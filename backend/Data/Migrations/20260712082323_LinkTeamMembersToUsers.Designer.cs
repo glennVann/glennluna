@@ -4,6 +4,7 @@ using GlennLuna.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GlennLuna.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260712082323_LinkTeamMembersToUsers")]
+    partial class LinkTeamMembersToUsers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -221,9 +224,6 @@ namespace GlennLuna.Api.Data.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
 
-                    b.Property<bool>("UseAccountProfileImage")
-                        .HasColumnType("tinyint(1)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ApplicationUserId")
@@ -241,8 +241,7 @@ namespace GlennLuna.Api.Data.Migrations
                             Name = "Graphic Artist",
                             Role = "Graphic Artist",
                             SkillsJson = "[\"Brand Design\",\"Digital Graphics\",\"Creative Assets\"]",
-                            SortOrder = 1,
-                            UseAccountProfileImage = false
+                            SortOrder = 1
                         },
                         new
                         {
@@ -253,8 +252,7 @@ namespace GlennLuna.Api.Data.Migrations
                             Name = "Content Writer",
                             Role = "Content Writer",
                             SkillsJson = "[\"Web Copy\",\"Content Strategy\",\"SEO Writing\"]",
-                            SortOrder = 2,
-                            UseAccountProfileImage = false
+                            SortOrder = 2
                         });
                 });
 

@@ -4,6 +4,7 @@ using GlennLuna.Api.Models;
 using GlennLuna.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net.Mail;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -36,6 +37,7 @@ builder.Services
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddTransient<IEmailSender<ApplicationUser>, SmtpIdentityEmailSender>();
+builder.Services.AddTransient<ITaskEmailSender, TaskEmailSender>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
@@ -65,6 +67,7 @@ app.MapGet("/api/auth/me", async (ClaimsPrincipal principal, UserManager<Applica
                 user.Email,
                 user.UserName,
                 user.DisplayName,
+                user.Role,
                 HasProfileImage = user.ProfileImage is { Length: > 0 },
                 IsTeamAdmin = IsTeamAdmin(user, adminEmail)
             });
@@ -161,12 +164,142 @@ app.MapPut("/api/auth/profile", async (
             user.Id,
             user.Email,
             user.UserName,
-            user.DisplayName,
+                user.DisplayName,
+                user.Role,
             HasProfileImage = user.ProfileImage is { Length: > 0 },
             IsTeamAdmin = IsTeamAdmin(user, adminEmail)
         });
     })
     .RequireAuthorization();
+
+app.MapGet("/api/work/users", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users) =>
+    {
+        var current = await users.GetUserAsync(principal);
+        if (current is null || !IsTeamAdmin(current, adminEmail)) return Results.Forbid();
+        return Results.Ok(await users.Users.OrderBy(user => user.Email).Select(user => new
+        {
+            user.Id, user.Email, user.DisplayName, user.Role
+        }).ToListAsync());
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/users/{id}/role", async (string id, RoleRequest request, ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users) =>
+    {
+        var current = await users.GetUserAsync(principal);
+        if (current is null || !IsTeamAdmin(current, adminEmail)) return Results.Forbid();
+        var user = await users.FindByIdAsync(id);
+        if (user is null) return Results.NotFound();
+        var role = request.Role?.Trim();
+        if (role is not ("User" or "Content Writer"))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User or Content Writer."] });
+        user.Role = role;
+        await users.UpdateAsync(user);
+        return Results.Ok(new { user.Id, user.Email, user.DisplayName, user.Role });
+    }).RequireAuthorization();
+
+app.MapGet("/api/work/tasks", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
+    ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var admin = IsTeamAdmin(user, adminEmail);
+        var query = db.ContentTasks.AsNoTracking().Include(task => task.AssignedToUser).AsQueryable();
+        if (!admin) query = query.Where(task => task.AssignedToUserId == user.Id);
+        return Results.Ok(await query.OrderBy(task => task.Status == "Completed").ThenBy(task => task.DueAtUtc)
+            .Select(task => new { task.Id, task.Title, task.Instructions, task.Status, task.DueAtUtc,
+                task.SubmissionText, task.SubmissionNotes, task.SubmissionLink, task.SubmittedAtUtc,
+                HasSubmissionFile = task.SubmissionFile != null, task.SubmissionFileName,
+                task.AssignedToUserId, Assignee = task.AssignedToUser!.DisplayName ?? task.AssignedToUser.Email })
+            .ToListAsync());
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/tasks/{id:int}/submission", async (int id, SubmissionRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var task = await db.ContentTasks.FindAsync(id);
+        if (task is null) return Results.NotFound();
+        if (task.AssignedToUserId != user.Id || user.Role != "Content Writer") return Results.Forbid();
+        if ((request.Content?.Length ?? 0) > 10000 || (request.Notes?.Length ?? 0) > 2000)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["submission"] = ["Content or notes are too long."] });
+        var link = request.Link?.Trim() ?? "";
+        if (link.Length > 500 || (link.Length > 0 && (!Uri.TryCreate(link, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["link"] = ["Use a valid http or https link."] });
+
+        byte[]? file = null;
+        if (!string.IsNullOrWhiteSpace(request.FileBase64))
+        {
+            try { file = Convert.FromBase64String(request.FileBase64); }
+            catch (FormatException) { return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = ["The uploaded file is invalid."] }); }
+            if (file.Length > 5 * 1024 * 1024)
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = ["The file must be 5 MB or smaller."] });
+            if (!IsAllowedSubmissionFile(file, request.FileContentType, request.FileName))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = ["Upload a JPEG, PNG, WebP, PDF, Word (.docx), or text file."] });
+            task.SubmissionFile = file;
+            task.SubmissionFileName = Path.GetFileName(request.FileName!);
+            task.SubmissionFileContentType = request.FileContentType!.ToLowerInvariant();
+        }
+        if (string.IsNullOrWhiteSpace(request.Content) && string.IsNullOrWhiteSpace(request.Notes) && string.IsNullOrWhiteSpace(link) && task.SubmissionFile is null)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["submission"] = ["Add written content, notes, a link, or a file."] });
+        task.SubmissionText = request.Content?.Trim() ?? ""; task.SubmissionNotes = request.Notes?.Trim() ?? "";
+        task.SubmissionLink = link; task.SubmittedAtUtc = DateTime.UtcNow; task.Status = "Submitted";
+        await db.SaveChangesAsync(); return Results.NoContent();
+    }).RequireAuthorization();
+
+app.MapGet("/api/work/tasks/{id:int}/submission-file", async (int id, ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users, ApplicationDbContext db, HttpContext context) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var task = await db.ContentTasks.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id);
+        if (task is null) return Results.NotFound();
+        if (!IsTeamAdmin(user, adminEmail) && task.AssignedToUserId != user.Id) return Results.Forbid();
+        if (task.SubmissionFile is null) return Results.NotFound();
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        return Results.File(task.SubmissionFile, task.SubmissionFileContentType ?? "application/octet-stream",
+            Path.GetFileName(task.SubmissionFileName ?? "submission"), enableRangeProcessing: false);
+    }).RequireAuthorization();
+
+app.MapPost("/api/work/tasks", async (TaskRequest request, ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users, ApplicationDbContext db, ITaskEmailSender taskEmailSender) =>
+    {
+        var current = await users.GetUserAsync(principal);
+        if (current is null || !IsTeamAdmin(current, adminEmail)) return Results.Forbid();
+        var assignee = await users.FindByIdAsync(request.AssignedToUserId ?? "");
+        if (assignee is null || assignee.Role != "Content Writer")
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["assignee"] = ["Select a content writer."] });
+        if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length > 160)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["title"] = ["A title of 160 characters or fewer is required."] });
+        var task = new ContentTask { Title = request.Title.Trim(), Instructions = request.Instructions?.Trim() ?? "",
+            DueAtUtc = request.DueAtUtc, AssignedToUserId = assignee.Id };
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        db.ContentTasks.Add(task); await db.SaveChangesAsync();
+        try
+        {
+            await taskEmailSender.SendAssignmentAsync(assignee, task);
+            await transaction.CommitAsync();
+        }
+        catch (Exception exception) when (exception is SmtpException or InvalidOperationException)
+        {
+            await transaction.RollbackAsync();
+            return Results.Problem("The task was not assigned because the notification email could not be sent. Check the SMTP configuration and try again.", statusCode: 502);
+        }
+        return Results.Created($"/api/work/tasks/{task.Id}", new { task.Id });
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/tasks/{id:int}/status", async (int id, TaskStatusRequest request, ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var task = await db.ContentTasks.FindAsync(id);
+        if (task is null) return Results.NotFound();
+        if (!IsTeamAdmin(user, adminEmail) && task.AssignedToUserId != user.Id) return Results.Forbid();
+        if (request.Status is not ("Assigned" or "In Progress" or "Submitted" or "Completed"))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose Assigned, In Progress, Submitted, or Completed."] });
+        task.Status = request.Status; await db.SaveChangesAsync(); return Results.NoContent();
+    }).RequireAuthorization();
 
 app.MapGet("/api/team", async (ApplicationDbContext dbContext) =>
     {
@@ -184,7 +317,12 @@ app.MapGet("/api/team", async (ApplicationDbContext dbContext) =>
                 member.SkillsJson,
                 member.SortOrder,
                 member.IsActive,
-                member.Photo != null))
+                member.UseAccountProfileImage
+                    ? member.ApplicationUser != null && member.ApplicationUser.ProfileImage != null
+                    : member.Photo != null,
+                member.UseAccountProfileImage,
+                null,
+                null))
             .ToListAsync();
         return Results.Ok(members.Select(ToTeamMemberListingResponse));
     });
@@ -193,10 +331,17 @@ app.MapGet("/api/team/{id:int}/photo", async (int id, ApplicationDbContext dbCon
     {
         var member = await dbContext.TeamMembers
             .AsNoTracking()
+            .Include(item => item.ApplicationUser)
             .SingleOrDefaultAsync(item => item.Id == id && item.IsActive);
-        return member?.Photo is not { Length: > 0 } photo
+        var photo = member?.UseAccountProfileImage == true
+            ? member.ApplicationUser?.ProfileImage
+            : member?.Photo;
+        var contentType = member?.UseAccountProfileImage == true
+            ? member.ApplicationUser?.ProfileImageContentType
+            : member?.PhotoContentType;
+        return photo is not { Length: > 0 }
             ? Results.NotFound()
-            : Results.File(photo, member.PhotoContentType ?? "application/octet-stream");
+            : Results.File(photo, contentType ?? "application/octet-stream");
     });
 
 app.MapGet("/api/team/manage", async (
@@ -220,7 +365,12 @@ app.MapGet("/api/team/manage", async (
                 member.SkillsJson,
                 member.SortOrder,
                 member.IsActive,
-                member.Photo != null))
+                member.UseAccountProfileImage
+                    ? member.ApplicationUser != null && member.ApplicationUser.ProfileImage != null
+                    : member.Photo != null,
+                member.UseAccountProfileImage,
+                member.ApplicationUserId,
+                member.ApplicationUser != null ? member.ApplicationUser.Email : null))
             .ToListAsync();
         return Results.Ok(members.Select(ToTeamMemberListingResponse));
     })
@@ -237,6 +387,15 @@ app.MapPost("/api/team", async (
 
         var errors = ValidateTeamMember(request);
         if (errors.Count > 0) return Results.ValidationProblem(errors);
+        if (!string.IsNullOrWhiteSpace(request.ApplicationUserId))
+        {
+            if (await userManager.FindByIdAsync(request.ApplicationUserId) is null)
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["applicationUserId"] = ["Select a registered account."] });
+            if (await dbContext.TeamMembers.AnyAsync(item => item.ApplicationUserId == request.ApplicationUserId))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["applicationUserId"] = ["That account is already linked to another worker."] });
+        }
+        if (request.UseAccountProfileImage && string.IsNullOrWhiteSpace(request.ApplicationUserId))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["useAccountProfileImage"] = ["Link a registered account before using its profile photo."] });
 
         var member = new TeamMember();
         ApplyTeamMember(member, request);
@@ -266,6 +425,15 @@ app.MapPut("/api/team/{id:int}", async (
 
         var errors = ValidateTeamMember(request);
         if (errors.Count > 0) return Results.ValidationProblem(errors);
+        if (!string.IsNullOrWhiteSpace(request.ApplicationUserId))
+        {
+            if (await userManager.FindByIdAsync(request.ApplicationUserId) is null)
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["applicationUserId"] = ["Select a registered account."] });
+            if (await dbContext.TeamMembers.AnyAsync(item => item.Id != id && item.ApplicationUserId == request.ApplicationUserId))
+                return Results.ValidationProblem(new Dictionary<string, string[]> { ["applicationUserId"] = ["That account is already linked to another worker."] });
+        }
+        if (request.UseAccountProfileImage && string.IsNullOrWhiteSpace(request.ApplicationUserId))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["useAccountProfileImage"] = ["Link a registered account before using its profile photo."] });
 
         ApplyTeamMember(member, request);
         if (!TryApplyTeamPhoto(member, request, out var photoError))
@@ -303,6 +471,23 @@ app.Run();
 static bool IsTeamAdmin(ApplicationUser user, string adminEmail) =>
     string.Equals(user.Email, adminEmail, StringComparison.OrdinalIgnoreCase);
 
+static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? fileName)
+{
+    if (bytes.Length == 0 || string.IsNullOrWhiteSpace(contentType) || string.IsNullOrWhiteSpace(fileName)) return false;
+    var extension = Path.GetExtension(Path.GetFileName(fileName)).ToLowerInvariant();
+    var type = contentType.ToLowerInvariant();
+    return (type, extension) switch
+    {
+        ("image/jpeg", ".jpg" or ".jpeg") => bytes.Length >= 3 && bytes[0] == 0xff && bytes[1] == 0xd8 && bytes[2] == 0xff,
+        ("image/png", ".png") => bytes.Length >= 8 && bytes[..8].SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }),
+        ("image/webp", ".webp") => bytes.Length >= 12 && bytes[..4].SequenceEqual("RIFF"u8) && bytes[8..12].SequenceEqual("WEBP"u8),
+        ("application/pdf", ".pdf") => bytes.Length >= 5 && bytes[..5].SequenceEqual("%PDF-"u8),
+        ("application/vnd.openxmlformats-officedocument.wordprocessingml.document", ".docx") => bytes.Length >= 4 && bytes[0] == 0x50 && bytes[1] == 0x4b && bytes[2] is 0x03 or 0x05 or 0x07 && bytes[3] is 0x04 or 0x06 or 0x08,
+        ("text/plain", ".txt") => !bytes.Contains((byte)0),
+        _ => false
+    };
+}
+
 static TeamMemberResponse ToTeamMemberResponse(TeamMember member) =>
     new(
         member.Id,
@@ -313,7 +498,12 @@ static TeamMemberResponse ToTeamMemberResponse(TeamMember member) =>
         ParseTeamSkills(member.SkillsJson),
         member.SortOrder,
         member.IsActive,
-        member.Photo is { Length: > 0 });
+        member.UseAccountProfileImage
+            ? member.ApplicationUser?.ProfileImage is { Length: > 0 }
+            : member.Photo is { Length: > 0 },
+        member.UseAccountProfileImage,
+        member.ApplicationUserId,
+        member.ApplicationUser?.Email);
 
 static TeamMemberResponse ToTeamMemberListingResponse(TeamMemberListing member) =>
     new(
@@ -325,7 +515,10 @@ static TeamMemberResponse ToTeamMemberListingResponse(TeamMemberListing member) 
         ParseTeamSkills(member.SkillsJson),
         member.SortOrder,
         member.IsActive,
-        member.HasPhoto);
+        member.HasPhoto,
+        member.UseAccountProfileImage,
+        member.ApplicationUserId,
+        member.ApplicationUserEmail);
 
 static string[] ParseTeamSkills(string skillsJson)
 {
@@ -372,6 +565,8 @@ static void ApplyTeamMember(TeamMember member, TeamMemberRequest request)
     member.SkillsJson = JsonSerializer.Serialize(NormalizeTeamSkills(request.Skills));
     member.SortOrder = request.SortOrder;
     member.IsActive = request.IsActive;
+    member.ApplicationUserId = string.IsNullOrWhiteSpace(request.ApplicationUserId) ? null : request.ApplicationUserId;
+    member.UseAccountProfileImage = request.UseAccountProfileImage;
 }
 
 static bool TryApplyTeamPhoto(TeamMember member, TeamMemberRequest request, out string error)
@@ -419,6 +614,11 @@ internal sealed record UpdateProfileRequest(
     string? ProfileImageContentType,
     bool RemoveProfileImage = false);
 
+internal sealed record RoleRequest(string? Role);
+internal sealed record TaskRequest(string? Title, string? Instructions, DateTime? DueAtUtc, string? AssignedToUserId);
+internal sealed record TaskStatusRequest(string Status);
+internal sealed record SubmissionRequest(string? Content, string? Notes, string? Link, string? FileName, string? FileContentType, string? FileBase64);
+
 internal sealed record TeamMemberRequest(
     string? Name,
     string? Role,
@@ -427,6 +627,8 @@ internal sealed record TeamMemberRequest(
     string[]? Skills,
     int SortOrder,
     bool IsActive,
+    string? ApplicationUserId,
+    bool UseAccountProfileImage,
     string? PhotoBase64,
     string? PhotoContentType,
     bool RemovePhoto);
@@ -440,7 +642,10 @@ internal sealed record TeamMemberResponse(
     string[] Skills,
     int SortOrder,
     bool IsActive,
-    bool HasPhoto);
+    bool HasPhoto,
+    bool UseAccountProfileImage,
+    string? ApplicationUserId,
+    string? ApplicationUserEmail);
 
 internal sealed record TeamMemberListing(
     int Id,
@@ -451,4 +656,7 @@ internal sealed record TeamMemberListing(
     string SkillsJson,
     int SortOrder,
     bool IsActive,
-    bool HasPhoto);
+    bool HasPhoto,
+    bool UseAccountProfileImage,
+    string? ApplicationUserId,
+    string? ApplicationUserEmail);

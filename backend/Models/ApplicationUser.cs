@@ -6,6 +6,9 @@ namespace GlennLuna.Api.Models;
 
 public sealed class ApplicationUser : IdentityUser
 {
+    [MaxLength(40)]
+    public string Role { get; set; } = "User";
+
     [MaxLength(100)]
     public string? DisplayName { get; set; }
 

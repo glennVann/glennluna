@@ -38,6 +38,11 @@ Identity requires email confirmation before login. Configure `SMTP_HOST`,
 `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and optionally
 `AUTH_FROM_EMAIL`. Registration sends a confirmation link automatically; use
 `POST /api/auth/resendConfirmationEmail` to resend it.
+
+Task assignment emails use the same SMTP settings. When an administrator assigns
+a writing task, the worker receives the title, instructions, deadline, and a link
+to `/dashboard`. Set `PUBLIC_APP_URL` to the public website origin so email links
+do not point to localhost.
 The backend automatically loads missing settings from the repository root
 `.env`, so it can reuse the same SMTP configuration as the Next.js service.
 System environment variables and .NET user-secrets take priority.

@@ -4,6 +4,7 @@ using GlennLuna.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GlennLuna.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260712081310_AddTaskSubmissions")]
+    partial class AddTaskSubmissions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,10 +183,6 @@ namespace GlennLuna.Api.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ApplicationUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
@@ -221,13 +220,7 @@ namespace GlennLuna.Api.Data.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
 
-                    b.Property<bool>("UseAccountProfileImage")
-                        .HasColumnType("tinyint(1)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
 
                     b.ToTable("TeamMembers");
 
@@ -241,8 +234,7 @@ namespace GlennLuna.Api.Data.Migrations
                             Name = "Graphic Artist",
                             Role = "Graphic Artist",
                             SkillsJson = "[\"Brand Design\",\"Digital Graphics\",\"Creative Assets\"]",
-                            SortOrder = 1,
-                            UseAccountProfileImage = false
+                            SortOrder = 1
                         },
                         new
                         {
@@ -253,8 +245,7 @@ namespace GlennLuna.Api.Data.Migrations
                             Name = "Content Writer",
                             Role = "Content Writer",
                             SkillsJson = "[\"Web Copy\",\"Content Strategy\",\"SEO Writing\"]",
-                            SortOrder = 2,
-                            UseAccountProfileImage = false
+                            SortOrder = 2
                         });
                 });
 
@@ -399,16 +390,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("AssignedToUser");
-                });
-
-            modelBuilder.Entity("GlennLuna.Api.Models.TeamMember", b =>
-                {
-                    b.HasOne("GlennLuna.Api.Models.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("GlennLuna.Api.Models.TeamMember", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

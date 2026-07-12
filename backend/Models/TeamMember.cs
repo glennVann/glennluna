@@ -31,4 +31,11 @@ public sealed class TeamMember
     public int SortOrder { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    [MaxLength(450)]
+    public string? ApplicationUserId { get; set; }
+
+    public ApplicationUser? ApplicationUser { get; set; }
+
+    public bool UseAccountProfileImage { get; set; }
 }

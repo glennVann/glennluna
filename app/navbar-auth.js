@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 const AUTH_CHANGED_EVENT = "glennluna:auth-changed";
@@ -215,6 +216,7 @@ export default function NavbarAuth() {
             <div className="absolute right-0 top-12 w-64 rounded-2xl border border-black/10 bg-white p-3 text-sm shadow-[0_18px_45px_rgba(21,35,33,0.18)]">
               {user.displayName && <p className="truncate px-2 pt-1 font-semibold text-[#152321]">{user.displayName}</p>}
               <p className="truncate px-2 py-1 text-xs text-black/55">{user.email}</p>
+              <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="mt-2 block w-full rounded-xl border border-[#152321]/12 px-3 py-2 text-center font-semibold text-[#152321] hover:bg-[#f4eee5]">Work dashboard</Link>
               <button type="button" onClick={openProfile} className="mt-2 w-full rounded-xl border border-[#152321]/12 px-3 py-2 font-semibold text-[#152321] hover:bg-[#f4eee5]">Edit profile</button>
               <button type="button" onClick={handleLogout} className="mt-2 w-full rounded-xl bg-[#152321] px-3 py-2 font-semibold text-white hover:bg-[#0f1a18]">Log out</button>
             </div>

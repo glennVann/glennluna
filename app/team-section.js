@@ -13,6 +13,8 @@ const EMPTY_FORM = {
   skills: "",
   sortOrder: "0",
   isActive: true,
+  applicationUserId: "",
+  useAccountProfileImage: false,
 };
 
 function getInitials(name, role) {
@@ -86,6 +88,7 @@ export default function TeamSection() {
   const [teamError, setTeamError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [managedMembers, setManagedMembers] = useState([]);
+  const [registeredUsers, setRegisteredUsers] = useState([]);
   const [managerLoading, setManagerLoading] = useState(false);
   const [managerError, setManagerError] = useState("");
   const [managerMessage, setManagerMessage] = useState("");
@@ -155,12 +158,12 @@ export default function TeamSection() {
     dialogRef.current?.showModal();
 
     try {
-      const result = await fetchJson(
-        "/api/team/manage",
-        { cache: "no-store" },
-        "Unable to load the team manager.",
-      );
+      const [result, users] = await Promise.all([
+        fetchJson("/api/team/manage", { cache: "no-store" }, "Unable to load the team manager."),
+        fetchJson("/api/work/users", { cache: "no-store" }, "Unable to load registered accounts."),
+      ]);
       setManagedMembers(Array.isArray(result) ? result : []);
+      setRegisteredUsers(Array.isArray(users) ? users : []);
     } catch (error) {
       setManagerError(error.message);
     } finally {
@@ -191,6 +194,8 @@ export default function TeamSection() {
       skills: Array.isArray(member.skills) ? member.skills.join(", ") : "",
       sortOrder: String(member.sortOrder ?? 0),
       isActive: Boolean(member.isActive),
+      applicationUserId: member.applicationUserId || "",
+      useAccountProfileImage: Boolean(member.useAccountProfileImage),
     });
     setPhotoData(null);
     setRemovePhoto(false);
@@ -212,6 +217,7 @@ export default function TeamSection() {
     setForm((current) => ({
       ...current,
       [name]: type === "checkbox" ? checked : value,
+      ...(name === "applicationUserId" && !value ? { useAccountProfileImage: false } : {}),
     }));
   }
 
@@ -293,6 +299,8 @@ export default function TeamSection() {
       skills,
       sortOrder: Number.parseInt(form.sortOrder, 10) || 0,
       isActive: form.isActive,
+      applicationUserId: form.applicationUserId || null,
+      useAccountProfileImage: form.useAccountProfileImage,
       photoBase64: photoData?.base64 || null,
       photoContentType: photoData?.contentType || null,
       removePhoto,
@@ -522,6 +530,9 @@ export default function TeamSection() {
                         <p className="mt-1 text-sm text-black/55">
                           {member.role} · Order {member.sortOrder}
                         </p>
+                        <p className="mt-1 text-xs text-black/45">
+                          {member.applicationUserEmail ? `Linked to ${member.applicationUserEmail}` : "No registered account linked"}
+                        </p>
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -577,6 +588,38 @@ export default function TeamSection() {
                   />
                 </label>
               </div>
+
+              <label className="mt-5 block text-sm font-semibold">
+                Registered account
+                <select
+                  name="applicationUserId"
+                  value={form.applicationUserId}
+                  onChange={updateField}
+                  className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 font-normal outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15"
+                >
+                  <option value="">Not linked</option>
+                  {registeredUsers.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.displayName ? `${user.displayName} (${user.email})` : user.email}
+                    </option>
+                  ))}
+                </select>
+                <span className="mt-2 block text-xs font-normal leading-5 text-black/50">
+                  Link this worker profile to one registered login account.
+                </span>
+              </label>
+
+              <label className="mt-4 flex items-center gap-3 rounded-2xl border border-black/10 bg-white px-4 py-3 text-sm font-semibold">
+                <input
+                  name="useAccountProfileImage"
+                  type="checkbox"
+                  checked={form.useAccountProfileImage}
+                  disabled={!form.applicationUserId}
+                  onChange={updateField}
+                  className="h-4 w-4 rounded border-black/20"
+                />
+                Use the profile photo uploaded by this registered worker
+              </label>
 
               <label className="mt-5 block text-sm font-semibold">
                 Focus
@@ -664,11 +707,12 @@ export default function TeamSection() {
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       onChange={handlePhotoChange}
+                      disabled={form.useAccountProfileImage}
                       className="mt-2 block w-full text-sm text-black/60 file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-4 file:py-2 file:font-semibold file:text-[#152321]"
                     />
                   </label>
                   <p className="mt-2 text-xs text-black/50">JPEG, PNG, or WebP. Maximum 2 MB.</p>
-                  {editingMember?.hasPhoto && (
+                  {editingMember?.hasPhoto && !form.useAccountProfileImage && (
                     <label className="mt-3 flex items-center gap-2 text-sm text-black/65">
                       <input
                         type="checkbox"

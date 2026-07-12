@@ -8,10 +8,26 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
+    public DbSet<ContentTask> ContentTasks => Set<ContentTask>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<ContentTask>()
+            .Property(task => task.SubmissionFile).HasColumnType("longblob");
+
+        builder.Entity<ContentTask>()
+            .HasOne(task => task.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(task => task.AssignedToUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<TeamMember>()
+            .HasOne(member => member.ApplicationUser)
+            .WithOne()
+            .HasForeignKey<TeamMember>(member => member.ApplicationUserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<TeamMember>().HasData(
             new TeamMember

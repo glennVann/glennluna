@@ -4,6 +4,7 @@ using GlennLuna.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GlennLuna.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260712080709_AddContentWriterTasks")]
+    partial class AddContentWriterTasks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -131,35 +134,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("varchar(30)");
 
-                    b.Property<byte[]>("SubmissionFile")
-                        .HasColumnType("longblob");
-
-                    b.Property<string>("SubmissionFileContentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<string>("SubmissionFileName")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("SubmissionLink")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
-
-                    b.Property<string>("SubmissionNotes")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
-
-                    b.Property<string>("SubmissionText")
-                        .IsRequired()
-                        .HasMaxLength(10000)
-                        .HasColumnType("varchar(10000)");
-
-                    b.Property<DateTime?>("SubmittedAtUtc")
-                        .HasColumnType("datetime(6)");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(160)
@@ -179,10 +153,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ApplicationUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -221,13 +191,7 @@ namespace GlennLuna.Api.Data.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("int");
 
-                    b.Property<bool>("UseAccountProfileImage")
-                        .HasColumnType("tinyint(1)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("ApplicationUserId")
-                        .IsUnique();
 
                     b.ToTable("TeamMembers");
 
@@ -241,8 +205,7 @@ namespace GlennLuna.Api.Data.Migrations
                             Name = "Graphic Artist",
                             Role = "Graphic Artist",
                             SkillsJson = "[\"Brand Design\",\"Digital Graphics\",\"Creative Assets\"]",
-                            SortOrder = 1,
-                            UseAccountProfileImage = false
+                            SortOrder = 1
                         },
                         new
                         {
@@ -253,8 +216,7 @@ namespace GlennLuna.Api.Data.Migrations
                             Name = "Content Writer",
                             Role = "Content Writer",
                             SkillsJson = "[\"Web Copy\",\"Content Strategy\",\"SEO Writing\"]",
-                            SortOrder = 2,
-                            UseAccountProfileImage = false
+                            SortOrder = 2
                         });
                 });
 
@@ -399,16 +361,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("AssignedToUser");
-                });
-
-            modelBuilder.Entity("GlennLuna.Api.Models.TeamMember", b =>
-                {
-                    b.HasOne("GlennLuna.Api.Models.ApplicationUser", "ApplicationUser")
-                        .WithOne()
-                        .HasForeignKey("GlennLuna.Api.Models.TeamMember", "ApplicationUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("ApplicationUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
