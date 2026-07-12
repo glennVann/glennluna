@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GlennLuna.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+180c1e8bf72e47f68269692efdea73d68022e083")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5f84e0ebfc348cb76e70a7ad871baa1d9f2f61e5")]
 [assembly: System.Reflection.AssemblyProductAttribute("GlennLuna.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GlennLuna.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

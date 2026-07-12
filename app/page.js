@@ -54,27 +54,27 @@ const focusAreas = [
   {
     title: "Frontend Engineering",
     description:
-      "Clean, responsive interfaces that feel easy to use and stay maintainable as the product grows.",
+      "Responsive interfaces that are straightforward to use on phones, tablets, and desktops.",
   },
   {
     title: "Backend Development",
     description:
-      "Practical backend work, clear business logic, and integrations that support real operations without creating extra complexity.",
+      "APIs, business logic, authentication, and integrations that keep the application running behind the scenes.",
   },
   {
     title: "Product Delivery",
     description:
-      "A steady delivery style that balances speed, code quality, and the real goals behind the project.",
+      "Turning an idea into a working release, then improving it based on how people actually use it.",
   },
   {
     title: "SEO and Maintenance",
     description:
-      "Technical SEO, performance improvements, and ongoing maintenance to keep websites useful after launch.",
+      "Search setup, performance work, bug fixes, and updates after the site goes live.",
   },
   {
     title: "Infrastructure Setup",
     description:
-      "Server setup, networking, deployment workflows, and file server planning that support reliable day-to-day operations.",
+      "Servers, networking, deployments, and shared storage when a project needs more than application code.",
   },
 ];
 
@@ -96,27 +96,27 @@ const serviceAreas = [
   {
     title: "Domain Management and Setup",
     description:
-      "Domain setup, DNS records, subdomain routing, nameserver changes, and the practical work needed to keep live websites running smoothly.",
+      "I can connect the domain, configure DNS, route subdomains, and sort out nameserver changes.",
   },
   {
     title: "Server Setup",
     description:
-      "Application deployment, VPS setup, reverse proxy configuration, and a clean production-ready environment.",
+      "I set up VPS hosting, deploy the application, configure the reverse proxy, and check that it starts reliably.",
   },
   {
     title: "Networking",
     description:
-      "Layer 2 and Layer 3 networking, wireless setup, fiber connectivity, DNS planning, and the internal setup needed to support live systems.",
+      "I work with wired and wireless networks, fiber connections, routing, switching, and internal DNS.",
   },
   {
     title: "File Server Setup",
     description:
-      "Shared storage setup, folder structure planning, and file workflows that make day-to-day work easier for teams.",
+      "Shared storage, sensible folder structures, access control, and file workflows for day-to-day work.",
   },
   {
     title: "SEO and Maintenance",
     description:
-      "SEO support, bug fixes, updates, and ongoing care for live websites and web applications.",
+      "I handle search improvements, fixes, upgrades, and the small jobs that keep a live site healthy.",
   },
 ];
 
@@ -176,11 +176,30 @@ const stackGroups = [
 ];
 
 const aboutMePoints = [
-  "I like building software that feels clear and polished for users, while still being practical to manage behind the scenes.",
-  "Most of my work sits between product thinking, clean engineering, and the real business needs that shape a project.",
-  "I’m comfortable taking a project from an early idea to a working system with structure, clarity, and steady execution.",
-  "I studied at SAIT and completed a Diploma in Software Development, which strengthened both my technical skills and my hands-on workflow.",
-  "I also bring a background in Telecom Engineering, which helps a lot when a project involves networking, infrastructure, or system planning.",
+  "I like making complicated jobs simpler for the person who has to use the software every day.",
+  "I can work across the interface, backend, database, server, and network instead of treating them as separate problems.",
+  "I’m comfortable starting with a rough idea and working through the details until there is something useful and working.",
+  "I completed a Software Development diploma at SAIT, where I built a strong practical foundation in application development.",
+  "My background in Telecom Engineering is useful when a job also involves networking, infrastructure, or system planning.",
+];
+
+const teamMembers = [
+  {
+    initials: "GA",
+    role: "Graphic Artist",
+    focus: "Visual identity and creative direction",
+    description:
+      "Helps with logos, brand assets, campaign graphics, and the visual details that make a project feel consistent.",
+    skills: ["Brand Design", "Digital Graphics", "Creative Assets"],
+  },
+  {
+    initials: "CW",
+    role: "Content Writer",
+    focus: "Clear messaging and useful content",
+    description:
+      "Works on website copy, product messaging, and search-friendly content that is clear and easy to read.",
+    skills: ["Web Copy", "Content Strategy", "SEO Writing"],
+  },
 ];
 
 export default function Home() {
@@ -198,14 +217,13 @@ export default function Home() {
 
             <div className="space-y-6">
               <h2 className="max-w-4xl text-5xl font-semibold tracking-[-0.05em] text-[#152321] sm:text-6xl lg:text-7xl">
-                Building thoughtful digital products with strong engineering
-                foundations.
+                I build websites and web apps that work in the real world.
               </h2>
               <p className="max-w-2xl text-lg leading-8 text-black/68 sm:text-xl">
-                I build websites, web applications, and digital systems that
-                are meant to be useful in the real world. My focus is on clean
-                user experience, dependable code, practical infrastructure, and
-                work that stays easy to manage as the business grows.
+                I&apos;m Glenn, a software developer in Calgary. I work on
+                everything from the interface and backend to deployment, DNS,
+                and the server it runs on. I care about making things useful,
+                reliable, and easy to look after.
               </p>
             </div>
 
@@ -230,8 +248,8 @@ export default function Home() {
                   Focus
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Websites, custom web apps, technical SEO, and dependable
-                  product delivery.
+                  Websites, custom web apps, technical SEO, and the systems
+                  needed to run them.
                 </p>
               </div>
               <div className="rounded-[1.75rem] border border-black/8 bg-white/72 p-5 shadow-[0_18px_45px_rgba(21,35,33,0.08)] backdrop-blur">
@@ -239,8 +257,8 @@ export default function Home() {
                   Strength
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Balancing good design, solid engineering, and what the
-                  business actually needs.
+                  Working across design, code, servers, and networking when a
+                  project calls for it.
                 </p>
               </div>
               <div className="rounded-[1.75rem] border border-black/8 bg-white/72 p-5 shadow-[0_18px_45px_rgba(21,35,33,0.08)] backdrop-blur">
@@ -248,8 +266,8 @@ export default function Home() {
                   Approach
                 </p>
                 <p className="mt-3 text-sm leading-7 text-black/70">
-                  Clear communication, steady execution, and maintainable code
-                  from planning through launch.
+                  I ask questions, explain the tradeoffs, and keep the work
+                  understandable from start to finish.
                 </p>
               </div>
             </div>
@@ -275,7 +293,7 @@ export default function Home() {
                 <div>
                   <p className="text-sm text-white/55">Primary Focus</p>
                   <p className="mt-2 text-2xl font-semibold">
-                    Full-Stack Development And Cloud-Ready Delivery
+                    From the interface to deployment
                   </p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -284,8 +302,8 @@ export default function Home() {
                       Specialties
                     </p>
                     <p className="mt-3 text-sm leading-7 text-white/78">
-                      Product development, API integration, deployment
-                      planning, and UI systems built to last.
+                      Web apps, APIs, integrations, interface work, and
+                      production deployments.
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -293,8 +311,8 @@ export default function Home() {
                       Value
                     </p>
                     <p className="mt-3 text-sm leading-7 text-white/78">
-                      Reliable execution across software, hosting, networking,
-                      and user experience.
+                      One person who can follow a problem across the app,
+                      hosting, DNS, and network.
                     </p>
                   </div>
                 </div>
@@ -303,9 +321,9 @@ export default function Home() {
                     Working Style
                   </p>
                   <p className="mt-3 text-sm leading-7 text-white/78">
-                    I like turning complex requirements into clear product
-                    decisions, stable code, reliable infrastructure, and
-                    interfaces that feel intentional on every screen size.
+                    I prefer practical decisions, readable code, and honest
+                    updates. If something is unclear or risky, I&apos;ll say so
+                    and work through it with you.
                   </p>
                 </div>
               </div>
@@ -324,7 +342,7 @@ export default function Home() {
               Core Expertise
             </p>
             <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#152321] sm:text-4xl">
-              Engineering with clarity, polish, and long-term maintainability.
+              The parts of a project I usually handle.
             </h3>
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
@@ -352,7 +370,7 @@ export default function Home() {
               Infrastructure Services
             </p>
             <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#152321] sm:text-4xl">
-              Beyond the app build, I also support the systems around it.
+              I also handle what happens around the application.
             </h3>
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
@@ -379,13 +397,12 @@ export default function Home() {
             Professional Profile
           </p>
           <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#152321]">
-            A developer who cares about both the build and the outcome.
+            I care about how the software works after launch.
           </h3>
           <p className="mt-5 text-base leading-8 text-black/68">
-            I see software development as a mix of engineering discipline and
-            practical problem-solving. For me, good work means building
-            something that is useful, maintainable, and complete from the
-            user&apos;s point of view.
+            A project is not finished just because it compiles. It needs to be
+            understandable, usable, deployed properly, and manageable when
+            something changes later.
           </p>
         </div>
 
@@ -416,14 +433,12 @@ export default function Home() {
               About Me
             </p>
             <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-              I build digital products with a strong balance of design,
-              reliability, and business practicality.
+              I&apos;m a software developer with a background in telecom.
             </h3>
             <p className="mt-5 text-base leading-8 text-white/76">
-              I&apos;m Glenn Luna, a software developer focused on web
-              applications, technical SEO, infrastructure support, and
-              maintainable delivery. I like building systems that feel clean to
-              use and stay dependable as they grow.
+              I enjoy work that mixes software with real operational problems.
+              That might mean building a web app, fixing its deployment, or
+              tracing a network issue that is getting in the way.
             </p>
           </div>
 
@@ -461,8 +476,7 @@ export default function Home() {
           </p>
           <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <h3 className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#152321] sm:text-4xl">
-              Real client and product work presented on a dedicated projects
-              page.
+              A few things I&apos;ve built or am currently working on.
             </h3>
             <Link
               href="/projects"
@@ -500,6 +514,60 @@ export default function Home() {
                 >
                   View details
                 </Link>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="team"
+        className="mx-auto w-full max-w-7xl px-6 py-8 sm:px-10 lg:px-12"
+      >
+        <div className="fade-up overflow-hidden rounded-[2.25rem] border border-black/8 bg-[#152321] p-8 text-white shadow-[0_24px_60px_rgba(21,35,33,0.16)] sm:p-10">
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/45">
+                The Team
+              </p>
+              <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+                A few people I work with.
+              </h3>
+            </div>
+            <p className="max-w-2xl text-base leading-8 text-white/68 lg:justify-self-end">
+              When a project needs help beyond development, I work with people
+              who can handle the visuals and the writing.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
+            {teamMembers.map((member) => (
+              <article
+                key={member.role}
+                className="rounded-[1.75rem] border border-white/10 bg-white/7 p-6 backdrop-blur sm:p-7"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#dd8c36,_#f0bc74)] text-sm font-bold tracking-[0.12em] text-[#152321] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
+                    {member.initials}
+                  </div>
+                  <div>
+                    <h4 className="text-xl font-semibold">{member.role}</h4>
+                    <p className="mt-1 text-sm text-white/55">{member.focus}</p>
+                  </div>
+                </div>
+                <p className="mt-5 text-sm leading-7 text-white/72">
+                  {member.description}
+                </p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {member.skills.map((skill) => (
+                    <span
+                      key={skill}
+                      className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/72"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
               </article>
             ))}
           </div>
@@ -544,13 +612,12 @@ export default function Home() {
           <div className="mt-5 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <h3 className="text-3xl font-semibold tracking-[-0.04em] text-[#152321] sm:text-4xl">
-                Need a website, platform, or custom software build?
+                Have a project in mind?
               </h3>
               <p className="mt-4 text-base leading-8 text-black/68">
-                If you already know what you want to build, send over the
-                details and I can help shape the next step. Domain setup, DNS,
-                routing, and infrastructure support can be included when
-                needed.
+                Send me what you know so far, even if it is still rough. I can
+                help work out the scope, the technical approach, and what to do
+                first.
               </p>
             </div>
             <Link
@@ -574,14 +641,12 @@ export default function Home() {
           <div className="mt-5 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
               <h3 className="text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-                Open to building thoughtful digital products and strong web
-                experiences.
+                Let&apos;s talk about what you&apos;re building.
               </h3>
               <p className="mt-4 text-base leading-8 text-white/76">
-                This profile is designed to present a clean, credible software
-                developer brand. Replace the contact details below with your
-                preferred links and it is ready to use as a personal portfolio
-                site.
+                Email me or send a quote request with the problem you are trying
+                to solve. I&apos;ll get back to you with questions and a practical
+                next step.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
