@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { authApiUrl } from "../_backend";
 
 export async function GET(request) {
+  const publicAppUrl = process.env.PUBLIC_APP_URL || request.nextUrl.origin;
+  const redirectTo = (status) => new URL(`/?emailConfirmed=${status}`, publicAppUrl);
   const userId = request.nextUrl.searchParams.get("userId");
   const code = request.nextUrl.searchParams.get("code");
 
   if (!userId || !code) {
-    return NextResponse.redirect(new URL("/?emailConfirmed=invalid", request.url));
+    return NextResponse.redirect(redirectTo("invalid"));
   }
 
   try {
@@ -15,10 +17,8 @@ export async function GET(request) {
       cache: "no-store",
     });
 
-    return NextResponse.redirect(
-      new URL(response.ok ? "/?emailConfirmed=true" : "/?emailConfirmed=invalid", request.url),
-    );
+    return NextResponse.redirect(redirectTo(response.ok ? "true" : "invalid"));
   } catch {
-    return NextResponse.redirect(new URL("/?emailConfirmed=unavailable", request.url));
+    return NextResponse.redirect(redirectTo("unavailable"));
   }
 }
