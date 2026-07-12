@@ -84,10 +84,11 @@ public sealed class SmtpIdentityEmailSender(IConfiguration configuration)
 
     private string ToPublicLink(string internalLink)
     {
+        var decodedLink = WebUtility.HtmlDecode(internalLink);
         var publicAppUrl = configuration["PUBLIC_APP_URL"];
-        if (string.IsNullOrWhiteSpace(publicAppUrl) || !Uri.TryCreate(internalLink, UriKind.Absolute, out var link))
+        if (string.IsNullOrWhiteSpace(publicAppUrl) || !Uri.TryCreate(decodedLink, UriKind.Absolute, out var link))
         {
-            return internalLink;
+            return decodedLink;
         }
 
         return new Uri(new Uri(publicAppUrl.TrimEnd('/') + "/"), link.PathAndQuery.TrimStart('/')).ToString();
