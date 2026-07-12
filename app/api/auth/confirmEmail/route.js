@@ -4,6 +4,7 @@ import { authApiUrl } from "../_backend";
 export async function GET(request) {
   const publicAppUrl = process.env.PUBLIC_APP_URL || request.nextUrl.origin;
   const redirectTo = (status) => new URL(`/?emailConfirmed=${status}`, publicAppUrl);
+  const rawQuery = request.url.split("?", 2)[1] || "";
   const userId = request.nextUrl.searchParams.get("userId");
   const code = request.nextUrl.searchParams.get("code");
 
@@ -12,8 +13,7 @@ export async function GET(request) {
   }
 
   try {
-    const query = new URLSearchParams({ userId, code });
-    const response = await fetch(`${authApiUrl}/api/auth/confirmEmail?${query}`, {
+    const response = await fetch(`${authApiUrl}/api/auth/confirmEmail?${rawQuery}`, {
       cache: "no-store",
     });
 
