@@ -1,0 +1,6 @@
+@GlennLuna.Api_HostAddress = http://localhost:5052
+
+GET {{GlennLuna.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

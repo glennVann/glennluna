@@ -18,6 +18,30 @@ npm run dev
 
 Open `http://localhost:3003`.
 
+## Authentication API
+
+The ASP.NET Core Identity API lives in `backend/` and targets .NET 10. Its
+MariaDB connection string is kept outside source control with .NET user-secrets.
+
+```powershell
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=glennluna;User=YOUR_USER;Password=YOUR_PASSWORD;" --project backend/GlennLuna.Api.csproj
+dotnet tool restore
+dotnet tool run dotnet-ef database update --project backend/GlennLuna.Api.csproj
+dotnet run --project backend/GlennLuna.Api.csproj --urls http://localhost:5000
+```
+
+Identity endpoints are under `/api/auth`, including `/register`, `/login`,
+`/refresh`, `/manage/info`, and the authenticated `/me` endpoint. Login returns
+an access token for `Authorization: Bearer <token>` requests.
+
+Identity requires email confirmation before login. Configure `SMTP_HOST`,
+`SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and optionally
+`AUTH_FROM_EMAIL`. Registration sends a confirmation link automatically; use
+`POST /api/auth/resendConfirmationEmail` to resend it.
+The backend automatically loads missing settings from the repository root
+`.env`, so it can reuse the same SMTP configuration as the Next.js service.
+System environment variables and .NET user-secrets take priority.
+
 ## Build
 
 ```bash
