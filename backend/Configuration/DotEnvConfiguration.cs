@@ -33,7 +33,7 @@ public static class DotEnvConfiguration
                 continue;
             }
 
-            var key = line[..separatorIndex].Trim();
+            var key = line[..separatorIndex].Trim().Replace("__", ":");
             if (configuration[key] is not null)
             {
                 continue;
