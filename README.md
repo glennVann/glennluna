@@ -41,6 +41,8 @@ Identity requires email confirmation before login. Configure `SMTP_HOST`,
 The backend automatically loads missing settings from the repository root
 `.env`, so it can reuse the same SMTP configuration as the Next.js service.
 System environment variables and .NET user-secrets take priority.
+The Next.js login proxy connects to the backend at `AUTH_API_URL`, which
+defaults to `http://127.0.0.1:5000` for the combined VPS service.
 
 ## Build
 

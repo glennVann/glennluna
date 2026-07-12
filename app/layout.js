@@ -1,5 +1,6 @@
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import CookieConsentBanner from "./cookie-consent-banner";
+import NavbarAuth from "./navbar-auth";
 import Image from "next/image";
 import Link from "next/link";
 import "./globals.css";
@@ -245,6 +246,7 @@ export default function RootLayout({ children }) {
               >
                 Request Quote
               </Link>
+              <NavbarAuth />
             </nav>
           </div>
         </header>
