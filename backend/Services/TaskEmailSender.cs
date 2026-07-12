@@ -30,11 +30,11 @@ public sealed class TaskEmailSender(IConfiguration configuration) : ITaskEmailSe
         using var message = new MailMessage
         {
             From = new MailAddress(from, "Glenn Luna"),
-            Subject = $"New writing task: {task.Title}",
+            Subject = $"New task: {task.Title}",
             IsBodyHtml = true,
             Body = $"""
                 <p>Hello {encode.Encode(worker.DisplayName ?? worker.Email)},</p>
-                <p>A new content-writing task has been assigned to you.</p>
+                <p>A new task has been assigned to you.</p>
                 <h2>{encode.Encode(task.Title)}</h2>
                 <p>{encode.Encode(task.Instructions).Replace("\n", "<br>")}</p>
                 <p><strong>{encode.Encode(due)}</strong></p>

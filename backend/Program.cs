@@ -190,8 +190,8 @@ app.MapPut("/api/work/users/{id}/role", async (string id, RoleRequest request, C
         var user = await users.FindByIdAsync(id);
         if (user is null) return Results.NotFound();
         var role = request.Role?.Trim();
-        if (role is not ("User" or "Content Writer"))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User or Content Writer."] });
+        if (role is not ("User" or "Content Writer" or "Worker"))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Content Writer, or Worker."] });
         user.Role = role;
         await users.UpdateAsync(user);
         return Results.Ok(new { user.Id, user.Email, user.DisplayName, user.Role });
@@ -220,7 +220,7 @@ app.MapPut("/api/work/tasks/{id:int}/submission", async (int id, SubmissionReque
         if (user is null) return Results.Unauthorized();
         var task = await db.ContentTasks.FindAsync(id);
         if (task is null) return Results.NotFound();
-        if (task.AssignedToUserId != user.Id || user.Role != "Content Writer") return Results.Forbid();
+        if (task.AssignedToUserId != user.Id || !CanReceiveWork(user)) return Results.Forbid();
         if ((request.Content?.Length ?? 0) > 10000 || (request.Notes?.Length ?? 0) > 2000)
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["submission"] = ["Content or notes are too long."] });
         var link = request.Link?.Trim() ?? "";
@@ -267,8 +267,8 @@ app.MapPost("/api/work/tasks", async (TaskRequest request, ClaimsPrincipal princ
         var current = await users.GetUserAsync(principal);
         if (current is null || !IsTeamAdmin(current, adminEmail)) return Results.Forbid();
         var assignee = await users.FindByIdAsync(request.AssignedToUserId ?? "");
-        if (assignee is null || assignee.Role != "Content Writer")
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["assignee"] = ["Select a content writer."] });
+        if (assignee is null || !CanReceiveWork(assignee))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["assignee"] = ["Select a content writer or worker."] });
         if (string.IsNullOrWhiteSpace(request.Title) || request.Title.Trim().Length > 160)
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["title"] = ["A title of 160 characters or fewer is required."] });
         var task = new ContentTask { Title = request.Title.Trim(), Instructions = request.Instructions?.Trim() ?? "",
@@ -470,6 +470,9 @@ app.Run();
 
 static bool IsTeamAdmin(ApplicationUser user, string adminEmail) =>
     string.Equals(user.Email, adminEmail, StringComparison.OrdinalIgnoreCase);
+
+static bool CanReceiveWork(ApplicationUser user) =>
+    user.Role is "Content Writer" or "Worker";
 
 static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? fileName)
 {
