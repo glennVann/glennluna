@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import TeamSection from "./team-section";
 
 const linkedInIcon = (
   <svg
@@ -181,25 +182,6 @@ const aboutMePoints = [
   "I’m comfortable starting with a rough idea and working through the details until there is something useful and working.",
   "I completed a Software Development diploma at SAIT, where I built a strong practical foundation in application development.",
   "My background in Telecom Engineering is useful when a job also involves networking, infrastructure, or system planning.",
-];
-
-const teamMembers = [
-  {
-    initials: "GA",
-    role: "Graphic Artist",
-    focus: "Visual identity and creative direction",
-    description:
-      "Helps with logos, brand assets, campaign graphics, and the visual details that make a project feel consistent.",
-    skills: ["Brand Design", "Digital Graphics", "Creative Assets"],
-  },
-  {
-    initials: "CW",
-    role: "Content Writer",
-    focus: "Clear messaging and useful content",
-    description:
-      "Works on website copy, product messaging, and search-friendly content that is clear and easy to read.",
-    skills: ["Web Copy", "Content Strategy", "SEO Writing"],
-  },
 ];
 
 export default function Home() {
@@ -520,59 +502,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section
-        id="team"
-        className="mx-auto w-full max-w-7xl px-6 py-8 sm:px-10 lg:px-12"
-      >
-        <div className="fade-up overflow-hidden rounded-[2.25rem] border border-black/8 bg-[#152321] p-8 text-white shadow-[0_24px_60px_rgba(21,35,33,0.16)] sm:p-10">
-          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
-            <div>
-              <p className="font-mono text-xs uppercase tracking-[0.3em] text-white/45">
-                The Team
-              </p>
-              <h3 className="mt-4 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-                A few people I work with.
-              </h3>
-            </div>
-            <p className="max-w-2xl text-base leading-8 text-white/68 lg:justify-self-end">
-              When a project needs help beyond development, I work with people
-              who can handle the visuals and the writing.
-            </p>
-          </div>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {teamMembers.map((member) => (
-              <article
-                key={member.role}
-                className="rounded-[1.75rem] border border-white/10 bg-white/7 p-6 backdrop-blur sm:p-7"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#dd8c36,_#f0bc74)] text-sm font-bold tracking-[0.12em] text-[#152321] shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-                    {member.initials}
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-semibold">{member.role}</h4>
-                    <p className="mt-1 text-sm text-white/55">{member.focus}</p>
-                  </div>
-                </div>
-                <p className="mt-5 text-sm leading-7 text-white/72">
-                  {member.description}
-                </p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {member.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="rounded-full border border-white/12 bg-white/8 px-3 py-1.5 text-xs font-medium text-white/72"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      <TeamSection />
 
       <section className="mx-auto w-full max-w-7xl px-6 py-8 sm:px-10 lg:px-12">
         <div className="fade-up rounded-[2.25rem] border border-black/8 bg-white/72 p-8 shadow-[0_24px_60px_rgba(21,35,33,0.08)] backdrop-blur sm:p-10">

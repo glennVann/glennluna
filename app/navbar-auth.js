@@ -3,6 +3,12 @@
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
+const AUTH_CHANGED_EVENT = "glennluna:auth-changed";
+
+function publishAuthChange(user) {
+  window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT, { detail: { user } }));
+}
+
 function getInitials(value) {
   const name = (value || "User").split("@")[0];
   const parts = name.split(/[\s._-]+/).filter(Boolean);
@@ -41,7 +47,10 @@ export default function NavbarAuth() {
     fetch("/api/auth/session", { cache: "no-store" })
       .then(async (response) => response.ok ? response.json() : { authenticated: false })
       .then((result) => {
-        if (active && result.authenticated) setUser(result.user);
+        if (active && result.authenticated) {
+          setUser(result.user);
+          publishAuthChange(result.user);
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -69,6 +78,7 @@ export default function NavbarAuth() {
       return;
     }
     setUser(result.user);
+    publishAuthChange(result.user);
     setSubmitting(false);
     dialogRef.current?.close();
   }
@@ -105,6 +115,7 @@ export default function NavbarAuth() {
     await fetch("/api/auth/logout", { method: "POST" });
     setMenuOpen(false);
     setUser(null);
+    publishAuthChange(null);
   }
 
   function openProfile() {
@@ -164,6 +175,7 @@ export default function NavbarAuth() {
     }
 
     setUser(result.user);
+    publishAuthChange(result.user);
     setPhotoVersion(Date.now());
     setProfileSaving(false);
     profileDialogRef.current?.close();
