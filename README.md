@@ -56,11 +56,13 @@ The app is configured to run on port `3003` by default.
 Use the root script below if you want `systemd` to start the app directly:
 
 ```bash
+dotnet build backend/GlennLuna.Api.csproj --configuration Release
 ./start-glennluna.sh
 ```
 
-It runs the app in production mode on `0.0.0.0:3003` and expects `.next` to
-already exist from `npm run build`.
+It runs the Next.js frontend on `0.0.0.0:3003` and the ASP.NET backend on
+`127.0.0.1:5000`. It expects both production builds to exist. Override the
+backend listener with `ASPNETCORE_URLS` when needed.
 
 For a VPS that already has the `glennluna.service` unit installed, you can
 restart it with the same file:
