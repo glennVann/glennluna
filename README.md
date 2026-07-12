@@ -43,6 +43,8 @@ The backend automatically loads missing settings from the repository root
 System environment variables and .NET user-secrets take priority.
 The Next.js login proxy connects to the backend at `AUTH_API_URL`, which
 defaults to `http://127.0.0.1:5000` for the combined VPS service.
+Set `PUBLIC_APP_URL=https://glennluna.bindaddy.ca` so confirmation emails use
+the public site instead of the backend's internal loopback address.
 
 ## Build
 

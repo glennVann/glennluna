@@ -19,7 +19,7 @@ public sealed class SmtpIdentityEmailSender(IConfiguration configuration)
             $"""
             <p>Hello,</p>
             <p>Please confirm your Glenn Luna account by clicking the link below:</p>
-            <p><a href="{HtmlEncoder.Default.Encode(confirmationLink)}">Confirm email address</a></p>
+            <p><a href="{HtmlEncoder.Default.Encode(ToPublicLink(confirmationLink))}">Confirm email address</a></p>
             <p>If you did not create this account, you can ignore this message.</p>
             """);
 
@@ -81,4 +81,15 @@ public sealed class SmtpIdentityEmailSender(IConfiguration configuration)
     private string GetRequiredValue(string name) =>
         configuration[name]
         ?? throw new InvalidOperationException($"Missing required configuration value: {name}");
+
+    private string ToPublicLink(string internalLink)
+    {
+        var publicAppUrl = configuration["PUBLIC_APP_URL"];
+        if (string.IsNullOrWhiteSpace(publicAppUrl) || !Uri.TryCreate(internalLink, UriKind.Absolute, out var link))
+        {
+            return internalLink;
+        }
+
+        return new Uri(new Uri(publicAppUrl.TrimEnd('/') + "/"), link.PathAndQuery.TrimStart('/')).ToString();
+    }
 }
