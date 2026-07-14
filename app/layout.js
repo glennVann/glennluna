@@ -1,6 +1,6 @@
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import CookieConsentBanner from "./cookie-consent-banner";
-import NavbarAuth from "./navbar-auth";
+import MainNav from "./main-nav";
 import Image from "next/image";
 import Link from "next/link";
 import "./globals.css";
@@ -213,51 +213,7 @@ export default function RootLayout({ children }) {
               </div>
             </Link>
 
-            <nav className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-              <Link
-                href="/"
-                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Home
-              </Link>
-              <Link
-                href="/about"
-                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                About Me
-              </Link>
-              <Link
-                href="/projects"
-                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Projects
-              </Link>
-              <Link
-                href="/designer"
-                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Designer
-              </Link>
-              <Link
-                href="/kids-corner"
-                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Kids Corner
-              </Link>
-              <Link
-                href="/#contact"
-                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                Contact
-              </Link>
-              <Link
-                href="/quote"
-                className="rounded-full bg-[#152321] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(21,35,33,0.12)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-              >
-                Request Quote
-              </Link>
-              <NavbarAuth />
-            </nav>
+            <MainNav />
           </div>
         </header>
         {children}

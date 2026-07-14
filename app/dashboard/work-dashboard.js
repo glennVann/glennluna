@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const ROLE_OPTIONS = [
   "User",
+  "Admin",
   "Content Writer",
   "Worker",
   "Graphic Designer",
@@ -11,6 +13,7 @@ const ROLE_OPTIONS = [
   "ParentReviewer",
 ];
 const TASK_STATUS_OPTIONS = ["Assigned", "In Progress", "Submitted", "Completed"];
+const QUOTE_STATUS_OPTIONS = ["New", "Reviewing", "Quoted", "Accepted", "Declined", "Closed"];
 const DESIGN_STATUS_OPTIONS = ["Draft", "Submitted", "Approved", "Published"];
 const OFFER_STATUS_OPTIONS = ["New", "Reviewing", "Accepted", "Declined"];
 const DESIGN_FILE_ACCEPT =
@@ -59,6 +62,23 @@ function getDesignStatusTone(status) {
   }
 }
 
+function getQuoteStatusTone(status) {
+  switch (status) {
+    case "Reviewing":
+      return "bg-amber-100 text-amber-800";
+    case "Quoted":
+      return "bg-sky-100 text-sky-800";
+    case "Accepted":
+      return "bg-emerald-100 text-emerald-800";
+    case "Declined":
+      return "bg-red-50 text-red-700";
+    case "Closed":
+      return "bg-stone-200 text-stone-700";
+    default:
+      return "bg-[#edf4f1] text-[#1b5e59]";
+  }
+}
+
 async function buildDesignPayload(form, submit) {
   const data = new FormData(form);
   const file = data.get("file");
@@ -77,6 +97,77 @@ async function buildDesignPayload(form, submit) {
     removeFile: data.get("removeFile") === "on",
     submit,
   };
+}
+
+function QuoteCard({ quote, isAdmin, savingQuoteId, onStatusChange }) {
+  return (
+    <article className="rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_36px_rgba(21,35,33,0.06)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-xl font-semibold">{quote.projectType || "Project quote"}</h3>
+            <span
+              className={
+                "rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] " +
+                getQuoteStatusTone(quote.status)
+              }
+            >
+              {quote.status}
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-black/55">
+            {quote.company || "No company listed"} · {formatDateTime(quote.createdAtUtc)}
+          </p>
+          {isAdmin && (
+            <p className="mt-1 text-xs text-black/45">
+              {quote.ownerName || quote.name} · {quote.email}
+            </p>
+          )}
+        </div>
+
+        {isAdmin && (
+          <label className="block text-xs font-semibold uppercase tracking-wide text-black/45">
+            Status
+            <select
+              value={quote.status}
+              onChange={(event) => onStatusChange(quote.id, event.target.value)}
+              disabled={savingQuoteId === quote.id}
+              className="mt-2 w-full rounded-xl border border-black/10 bg-white p-2.5 text-sm font-normal normal-case tracking-normal text-[#152321] disabled:opacity-60"
+            >
+              {QUOTE_STATUS_OPTIONS.map((status) => (
+                <option key={status}>{status}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-3 rounded-2xl bg-[#f7f2ea] p-4 text-sm text-black/65 sm:grid-cols-2">
+        <p>
+          <span className="font-semibold text-[#152321]">Timeline:</span>{" "}
+          {quote.timeline || "Not provided"}
+        </p>
+        <p>
+          <span className="font-semibold text-[#152321]">Budget:</span>{" "}
+          {quote.budget || "Not provided"}
+        </p>
+        <p className="sm:col-span-2">
+          <span className="font-semibold text-[#152321]">Services:</span>{" "}
+          {quote.services?.length ? quote.services.join(", ") : "Not provided"}
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-3 text-sm leading-7 text-black/68">
+        <p className="whitespace-pre-wrap">{quote.details}</p>
+        {quote.infrastructureNotes && (
+          <p className="whitespace-pre-wrap rounded-2xl border border-black/8 bg-[#fbfaf6] p-4">
+            <span className="font-semibold text-[#152321]">Infrastructure notes:</span>{" "}
+            {quote.infrastructureNotes}
+          </p>
+        )}
+      </div>
+    </article>
+  );
 }
 
 function TaskCard({ task, isAdmin, isDue, onStatusChange, onSubmitWork }) {
@@ -510,6 +601,7 @@ export default function WorkDashboard() {
   const roleDialogRef = useRef(null);
   const taskDialogRef = useRef(null);
   const [session, setSession] = useState(null);
+  const [quotes, setQuotes] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [designs, setDesigns] = useState([]);
   const [designOffers, setDesignOffers] = useState([]);
@@ -519,6 +611,7 @@ export default function WorkDashboard() {
   const [assigning, setAssigning] = useState(false);
   const [savingDesignKey, setSavingDesignKey] = useState("");
   const [savingDesignStatusId, setSavingDesignStatusId] = useState(null);
+  const [savingQuoteId, setSavingQuoteId] = useState(null);
   const [savingOfferId, setSavingOfferId] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
 
@@ -529,6 +622,7 @@ export default function WorkDashboard() {
       setSession(nextSession);
 
       if (!nextSession.authenticated) {
+        setQuotes([]);
         setTasks([]);
         setDesigns([]);
         setDesignOffers([]);
@@ -539,13 +633,15 @@ export default function WorkDashboard() {
       const canReviewKidDesigns =
         nextSession.user.isTeamAdmin ||
         nextSession.user.role === "ParentReviewer";
-      const [taskList, designList, offerList, userList] = await Promise.all([
+      const [quoteList, taskList, designList, offerList, userList] = await Promise.all([
+        api("/api/work/quotes"),
         api("/api/work/tasks"),
         api("/api/work/designs"),
         canReviewKidDesigns ? api("/api/work/design-offers") : Promise.resolve([]),
         nextSession.user.isTeamAdmin ? api("/api/work/users") : Promise.resolve([]),
       ]);
 
+      setQuotes(quoteList);
       setTasks(taskList);
       setDesigns(designList);
       setDesignOffers(offerList);
@@ -622,6 +718,24 @@ export default function WorkDashboard() {
       await load();
     } catch (statusError) {
       setError(statusError.message);
+    }
+  }
+
+  async function setQuoteStatus(id, status) {
+    try {
+      setError("");
+      setSavingQuoteId(id);
+      await api("/api/work/quotes/" + id + "/status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      setMessage("Quote status updated.");
+      await load();
+    } catch (statusError) {
+      setError(statusError.message);
+    } finally {
+      setSavingQuoteId(null);
     }
   }
 
@@ -855,6 +969,51 @@ export default function WorkDashboard() {
           {message}
         </p>
       )}
+
+      <section className="mt-10 rounded-[2rem] border border-black/8 bg-[#f5f1ea] p-6 sm:p-8">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="font-mono text-xs uppercase tracking-[.22em] text-[#1b5e59]">
+              Quote dashboard
+            </p>
+            <h2 className="mt-2 text-3xl font-semibold">
+              {isAdmin ? "Quote request inbox" : "My quote requests"}
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-black/62">
+              {isAdmin
+                ? "Review saved quote requests from signed-in users and update their status as the conversation moves forward."
+                : "Create a quote request while signed in and track the request status here."}
+            </p>
+          </div>
+
+          <Link
+            href="/quote"
+            className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(21,35,33,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
+          >
+            Create quote request
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          {quotes.length ? (
+            quotes.map((quote) => (
+              <QuoteCard
+                key={quote.id}
+                quote={quote}
+                isAdmin={isAdmin}
+                savingQuoteId={savingQuoteId}
+                onStatusChange={setQuoteStatus}
+              />
+            ))
+          ) : (
+            <p className="rounded-[1.5rem] border border-dashed border-black/12 bg-white/72 p-8 text-center text-sm text-black/45 lg:col-span-2">
+              {isAdmin
+                ? "No saved quote requests yet."
+                : "No quote requests yet. Start one when you are ready."}
+            </p>
+          )}
+        </div>
+      </section>
 
       {canUseDesigns && (
         <section className="mt-10 rounded-[2rem] border border-black/8 bg-[#f5f1ea] p-6 sm:p-8">
@@ -1112,7 +1271,7 @@ export default function WorkDashboard() {
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">Account roles</h2>
                 <p className="mt-2 text-sm text-black/55">
-                  Workers and Graphic Designers handle tasks, Kid Creators upload private designs, and Parent Reviewers approve before publishing.
+                  New accounts start as normal Users. Admins can promote trusted accounts, assign work roles, and keep kids' design publishing supervised.
                 </p>
               </div>
               <button
@@ -1140,11 +1299,12 @@ export default function WorkDashboard() {
 
             <div className="mt-6 grid gap-3 rounded-[1.5rem] bg-[#f7f2ea] p-4 text-sm text-black/60 sm:grid-cols-2">
               <p><span className="font-semibold text-[#152321]">User:</span> Standard account access.</p>
+              <p><span className="font-semibold text-[#152321]">Admin:</span> Full dashboard access, role management, task assignment, and review controls.</p>
               <p><span className="font-semibold text-[#152321]">Worker:</span> Receives assigned tasks.</p>
               <p><span className="font-semibold text-[#152321]">Content Writer:</span> Receives writing tasks.</p>
               <p><span className="font-semibold text-[#152321]">Graphic Designer:</span> Receives graphics tasks and submits updated design files.</p>
               <p><span className="font-semibold text-[#152321]">KidCreator:</span> Creates and edits private design submissions.</p>
-              <p className="sm:col-span-2"><span className="font-semibold text-[#152321]">ParentReviewer:</span> Reviews kid submissions and controls approval or publication.</p>
+              <p><span className="font-semibold text-[#152321]">ParentReviewer:</span> Reviews kid submissions and controls approval or publication.</p>
             </div>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2">

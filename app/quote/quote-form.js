@@ -80,6 +80,7 @@ export default function QuoteForm({
     getInitialServices(initialServices),
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitState, setSubmitState] = useState({
     type: "",
@@ -127,6 +128,30 @@ export default function QuoteForm({
   useEffect(() => {
     renderTurnstileWidget();
   }, [renderTurnstileWidget]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSession() {
+      const response = await fetch("/api/auth/session", { cache: "no-store" });
+      const result = await response.json().catch(() => ({}));
+
+      if (cancelled || !result.authenticated) return;
+
+      setIsSignedIn(true);
+      setForm((current) => ({
+        ...current,
+        name: current.name || result.user?.displayName || "",
+        email: current.email || result.user?.email || "",
+      }));
+    }
+
+    loadSession().catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -189,7 +214,9 @@ export default function QuoteForm({
       setSubmitState({
         type: "success",
         message:
-          "Quote request sent successfully. I will review it and follow up soon.",
+          isSignedIn
+            ? "Quote request sent successfully and saved to your dashboard. I will review it and follow up soon."
+            : "Quote request sent successfully. I will review it and follow up soon.",
       });
       setForm(createInitialForm(initialProjectType));
       setSelectedServices(getInitialServices(initialServices));

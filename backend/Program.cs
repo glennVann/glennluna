@@ -191,10 +191,63 @@ app.MapPut("/api/work/users/{id}/role", async (string id, RoleRequest request, C
         if (user is null) return Results.NotFound();
         var role = request.Role?.Trim();
         if (role is null || !IsValidAccountRole(role))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Content Writer, Worker, Graphic Designer, KidCreator, or ParentReviewer."] });
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Admin, Content Writer, Worker, Graphic Designer, KidCreator, or ParentReviewer."] });
         user.Role = role;
         await users.UpdateAsync(user);
         return Results.Ok(new { user.Id, user.Email, user.DisplayName, user.Role });
+    }).RequireAuthorization();
+
+app.MapGet("/api/work/quotes", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
+    ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        var admin = IsTeamAdmin(user, adminEmail);
+        var query = db.QuoteRequests.AsNoTracking().Include(quote => quote.OwnerUser).AsQueryable();
+        if (!admin) query = query.Where(quote => quote.OwnerUserId == user.Id);
+        var quotes = await query
+            .OrderBy(quote => quote.Status == "Closed")
+            .ThenByDescending(quote => quote.CreatedAtUtc)
+            .ToListAsync();
+
+        return Results.Ok(quotes.Select(ToQuoteRequestResponse));
+    }).RequireAuthorization();
+
+app.MapPost("/api/work/quotes", async (QuoteRequestRequest request, ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var errors = ValidateQuoteRequest(request);
+        if (errors.Count > 0) return Results.ValidationProblem(errors);
+
+        var quote = new QuoteRequest { OwnerUserId = user.Id };
+        ApplyQuoteRequest(quote, request);
+        db.QuoteRequests.Add(quote);
+        await db.SaveChangesAsync();
+
+        return Results.Created($"/api/work/quotes/{quote.Id}", ToQuoteRequestResponse(quote));
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/quotes/{id:int}/status", async (int id, QuoteStatusRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null || !IsTeamAdmin(user, adminEmail)) return Results.Forbid();
+
+        var quote = await db.QuoteRequests.Include(item => item.OwnerUser).SingleOrDefaultAsync(item => item.Id == id);
+        if (quote is null) return Results.NotFound();
+
+        var status = request.Status?.Trim();
+        if (!IsValidQuoteStatus(status))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose New, Reviewing, Quoted, Accepted, Declined, or Closed."] });
+
+        quote.Status = status!;
+        quote.UpdatedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(ToQuoteRequestResponse(quote));
     }).RequireAuthorization();
 
 app.MapGet("/api/work/tasks", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
@@ -688,13 +741,13 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.Run();
 
 static bool IsTeamAdmin(ApplicationUser user, string adminEmail) =>
-    string.Equals(user.Email, adminEmail, StringComparison.OrdinalIgnoreCase);
+    user.Role == "Admin" || string.Equals(user.Email, adminEmail, StringComparison.OrdinalIgnoreCase);
 
 static bool CanReceiveWork(ApplicationUser user) =>
     user.Role is "Content Writer" or "Worker" or "Graphic Designer";
 
 static bool IsValidAccountRole(string? role) =>
-    role is "User" or "Content Writer" or "Worker" or "Graphic Designer" or "KidCreator" or "ParentReviewer";
+    role is "User" or "Admin" or "Content Writer" or "Worker" or "Graphic Designer" or "KidCreator" or "ParentReviewer";
 
 static bool CanUseKidDesigns(ApplicationUser user, string adminEmail) =>
     user.Role is "KidCreator" or "ParentReviewer" || IsTeamAdmin(user, adminEmail);
@@ -707,6 +760,9 @@ static bool IsValidKidDesignStatus(string? status) =>
 
 static bool IsValidKidDesignOfferStatus(string? status) =>
     status is "New" or "Reviewing" or "Accepted" or "Declined";
+
+static bool IsValidQuoteStatus(string? status) =>
+    status is "New" or "Reviewing" or "Quoted" or "Accepted" or "Declined" or "Closed";
 
 static string NormalizeCurrency(string? currency)
 {
@@ -769,6 +825,97 @@ static KidDesignOfferResponse ToKidDesignOfferResponse(KidDesignOffer offer) =>
         offer.ReviewedAtUtc,
         offer.ReviewerUserId,
         offer.ReviewerUser?.DisplayName ?? offer.ReviewerUser?.Email);
+
+static QuoteRequestResponse ToQuoteRequestResponse(QuoteRequest quote) =>
+    new(
+        quote.Id,
+        quote.OwnerUserId,
+        quote.OwnerUser?.DisplayName ?? quote.OwnerUser?.Email,
+        quote.Name,
+        quote.Email,
+        quote.Company,
+        quote.ProjectType,
+        ParseQuoteServices(quote.ServicesJson),
+        quote.Timeline,
+        quote.Budget,
+        quote.Details,
+        quote.InfrastructureNotes,
+        quote.Status,
+        quote.CreatedAtUtc,
+        quote.UpdatedAtUtc);
+
+static string[] ParseQuoteServices(string servicesJson)
+{
+    try
+    {
+        return JsonSerializer.Deserialize<string[]>(servicesJson)?
+            .Where(service => !string.IsNullOrWhiteSpace(service))
+            .ToArray() ?? [];
+    }
+    catch (JsonException)
+    {
+        return [];
+    }
+}
+
+static string[] NormalizeQuoteServices(IEnumerable<string?>? services) =>
+    services?
+        .Where(service => !string.IsNullOrWhiteSpace(service))
+        .Select(service => service!.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .Take(20)
+        .ToArray() ?? [];
+
+static Dictionary<string, string[]> ValidateQuoteRequest(QuoteRequestRequest request)
+{
+    var errors = new Dictionary<string, string[]>();
+    if (string.IsNullOrWhiteSpace(request.Name)) errors["name"] = ["Name is required."];
+    else if (request.Name.Trim().Length > 100) errors["name"] = ["Name must be 100 characters or fewer."];
+
+    if (string.IsNullOrWhiteSpace(request.Email)) errors["email"] = ["Email is required."];
+    else
+    {
+        try
+        {
+            _ = new MailAddress(request.Email.Trim());
+        }
+        catch (FormatException)
+        {
+            errors["email"] = ["Use a valid email address."];
+        }
+    }
+
+    if (request.Company?.Trim().Length > 160) errors["company"] = ["Company must be 160 characters or fewer."];
+    if (request.ProjectType?.Trim().Length > 80) errors["projectType"] = ["Project type must be 80 characters or fewer."];
+    if (request.Timeline?.Trim().Length > 120) errors["timeline"] = ["Timeline must be 120 characters or fewer."];
+    if (request.Budget?.Trim().Length > 120) errors["budget"] = ["Budget must be 120 characters or fewer."];
+
+    var services = NormalizeQuoteServices(request.Services);
+    if (services.Any(service => service.Length > 80))
+        errors["services"] = ["Each service must be 80 characters or fewer."];
+
+    if (string.IsNullOrWhiteSpace(request.Details)) errors["details"] = ["Project details are required."];
+    else if (request.Details.Trim().Length > 8000) errors["details"] = ["Project details must be 8000 characters or fewer."];
+
+    if (request.InfrastructureNotes?.Trim().Length > 3000)
+        errors["infrastructureNotes"] = ["Infrastructure notes must be 3000 characters or fewer."];
+
+    return errors;
+}
+
+static void ApplyQuoteRequest(QuoteRequest quote, QuoteRequestRequest request)
+{
+    quote.Name = request.Name!.Trim();
+    quote.Email = request.Email!.Trim().ToLowerInvariant();
+    quote.Company = request.Company?.Trim() ?? string.Empty;
+    quote.ProjectType = request.ProjectType?.Trim() ?? string.Empty;
+    quote.ServicesJson = JsonSerializer.Serialize(NormalizeQuoteServices(request.Services));
+    quote.Timeline = request.Timeline?.Trim() ?? string.Empty;
+    quote.Budget = request.Budget?.Trim() ?? string.Empty;
+    quote.Details = request.Details!.Trim();
+    quote.InfrastructureNotes = request.InfrastructureNotes?.Trim() ?? string.Empty;
+    quote.UpdatedAtUtc = DateTime.UtcNow;
+}
 
 static Dictionary<string, string[]> ValidateKidDesignSubmission(
     KidDesignSubmissionRequest request,
@@ -1030,6 +1177,19 @@ internal sealed record UpdateProfileRequest(
     bool RemoveProfileImage = false);
 
 internal sealed record RoleRequest(string? Role);
+internal sealed record QuoteRequestRequest(
+    string? Name,
+    string? Email,
+    string? Company,
+    string? ProjectType,
+    string[]? Services,
+    string? Timeline,
+    string? Budget,
+    string? Details,
+    string? InfrastructureNotes);
+
+internal sealed record QuoteStatusRequest(string? Status);
+
 internal sealed record TaskRequest(string? Title, string? Instructions, DateTime? DueAtUtc, string? AssignedToUserId);
 internal sealed record TaskStatusRequest(string Status);
 internal sealed record SubmissionRequest(string? Content, string? Notes, string? Link, string? FileName, string? FileContentType, string? FileBase64);
@@ -1066,6 +1226,23 @@ internal sealed record PublicKidDesignResponse(
     string Description,
     decimal? AskingPrice,
     string SaleCurrency);
+
+internal sealed record QuoteRequestResponse(
+    int Id,
+    string? OwnerUserId,
+    string? OwnerName,
+    string Name,
+    string Email,
+    string Company,
+    string ProjectType,
+    string[] Services,
+    string Timeline,
+    string Budget,
+    string Details,
+    string InfrastructureNotes,
+    string Status,
+    DateTime CreatedAtUtc,
+    DateTime UpdatedAtUtc);
 
 internal sealed record KidDesignSubmissionResponse(
     int Id,

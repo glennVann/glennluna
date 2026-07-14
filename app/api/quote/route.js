@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { accessCookie, authApiUrl } from "../auth/_backend";
 
 function getRequiredEnv(name) {
   const value = process.env[name];
@@ -38,6 +40,41 @@ async function verifyTurnstileToken(token, ipAddress) {
 
   if (!response.ok) {
     throw new Error("Turnstile siteverify request failed.");
+  }
+
+  return response.json();
+}
+
+async function saveAuthenticatedQuote(body) {
+  const token = (await cookies()).get(accessCookie)?.value;
+  if (!token) return null;
+
+  const response = await fetch(`${authApiUrl}/api/work/quotes`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: body.name,
+      email: body.email,
+      company: body.company,
+      projectType: body.projectType,
+      services: Array.isArray(body.services) ? body.services : [],
+      timeline: body.timeline,
+      budget: body.budget,
+      details: body.details,
+      infrastructureNotes: body.infrastructureNotes,
+    }),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const problem = await response.json().catch(() => ({}));
+    const details = problem.errors
+      ? Object.values(problem.errors).flat().join(" ")
+      : problem.detail || "Unable to save the quote request to your dashboard.";
+    throw new Error(details);
   }
 
   return response.json();
@@ -97,6 +134,8 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+
+    await saveAuthenticatedQuote(body);
 
     const smtpUser = getRequiredEnv("SMTP_USER");
     const smtpPass = getRequiredEnv("SMTP_PASS");

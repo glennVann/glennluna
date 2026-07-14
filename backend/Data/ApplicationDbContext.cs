@@ -9,6 +9,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 {
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
     public DbSet<ContentTask> ContentTasks => Set<ContentTask>();
+    public DbSet<QuoteRequest> QuoteRequests => Set<QuoteRequest>();
     public DbSet<KidDesignSubmission> KidDesignSubmissions => Set<KidDesignSubmission>();
     public DbSet<KidDesignOffer> KidDesignOffers => Set<KidDesignOffer>();
 
@@ -24,6 +25,18 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             .WithMany()
             .HasForeignKey(task => task.AssignedToUserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<QuoteRequest>()
+            .HasOne(quote => quote.OwnerUser)
+            .WithMany()
+            .HasForeignKey(quote => quote.OwnerUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<QuoteRequest>()
+            .HasIndex(quote => quote.Status);
+
+        builder.Entity<QuoteRequest>()
+            .HasIndex(quote => quote.OwnerUserId);
 
         builder.Entity<KidDesignSubmission>()
             .HasOne(submission => submission.OwnerUser)
