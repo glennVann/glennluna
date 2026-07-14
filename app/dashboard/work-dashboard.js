@@ -607,7 +607,6 @@ export default function WorkDashboard() {
   const [designOffers, setDesignOffers] = useState([]);
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
-  const [quoteError, setQuoteError] = useState("");
   const [message, setMessage] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [savingDesignKey, setSavingDesignKey] = useState("");
@@ -624,7 +623,6 @@ export default function WorkDashboard() {
 
       if (!nextSession.authenticated) {
         setQuotes([]);
-        setQuoteError("");
         setTasks([]);
         setDesigns([]);
         setDesignOffers([]);
@@ -635,12 +633,7 @@ export default function WorkDashboard() {
       const canReviewKidDesigns =
         nextSession.user.isTeamAdmin ||
         nextSession.user.role === "ParentReviewer";
-      let quoteLoadFailed = false;
       const quoteRequest = api("/api/work/quotes").catch(() => {
-        quoteLoadFailed = true;
-        setQuoteError(
-          "Quote requests are temporarily unavailable. If this is right after deployment, run the database update on the server.",
-        );
         return [];
       });
       const [quoteList, taskList, designList, offerList, userList] = await Promise.all([
@@ -652,7 +645,6 @@ export default function WorkDashboard() {
       ]);
 
       setQuotes(quoteList);
-      if (!quoteLoadFailed) setQuoteError("");
       setTasks(taskList);
       setDesigns(designList);
       setDesignOffers(offerList);
@@ -1004,12 +996,6 @@ export default function WorkDashboard() {
             Create quote request
           </Link>
         </div>
-
-        {quoteError && (
-          <p className="mt-6 rounded-xl bg-amber-50 p-3 text-sm text-amber-800" role="status">
-            {quoteError}
-          </p>
-        )}
 
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
           {quotes.length ? (
