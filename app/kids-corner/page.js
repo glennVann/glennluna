@@ -1,4 +1,4 @@
-import Link from "next/link";
+import KidsCornerActions from "./kids-corner-actions";
 import KidsOfferGallery from "./kids-offer-gallery";
 
 export const metadata = {
@@ -77,26 +77,7 @@ export default function KidsCornerPage() {
               real portfolio pieces.
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="#prompts"
-              className="inline-flex items-center justify-center rounded-full bg-[#152321] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(21,35,33,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-            >
-              Start A Prompt
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white/76 px-6 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-            >
-              Open Dashboard
-            </Link>
-            <Link
-              href="#offers"
-              className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white/76 px-6 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
-            >
-              Make An Offer
-            </Link>
-          </div>
+          <KidsCornerActions />
         </div>
 
         <div className="fade-up relative min-h-[28rem] rounded-[2rem] border border-[#152321]/10 bg-white p-5 shadow-[0_24px_70px_rgba(21,35,33,0.12)]">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AuthenticatedDashboardButton } from "../kids-corner-actions";
 
 export const metadata = {
   title: "Kids Corner Policy",
@@ -103,12 +104,9 @@ export default function KidsCornerPolicyPage() {
             >
               Back to Kids Corner
             </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full border border-white/16 px-5 py-3 text-sm font-semibold text-white"
-            >
+            <AuthenticatedDashboardButton className="inline-flex items-center justify-center rounded-full border border-white/16 px-5 py-3 text-sm font-semibold text-white">
               Open Dashboard
-            </Link>
+            </AuthenticatedDashboardButton>
           </div>
         </div>
       </section>
