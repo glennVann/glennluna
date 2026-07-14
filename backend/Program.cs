@@ -4,6 +4,8 @@ using GlennLuna.Api.Models;
 using GlennLuna.Api.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using System.Net.Mail;
 using System.Security.Claims;
 using System.Text.Json;
@@ -310,8 +312,12 @@ app.MapGet("/api/work/tasks/{id:int}/submission-file", async (int id, ClaimsPrin
         if (!IsTeamAdmin(user, adminEmail) && task.AssignedToUserId != user.Id) return Results.Forbid();
         if (task.SubmissionFile is null) return Results.NotFound();
         context.Response.Headers.XContentTypeOptions = "nosniff";
-        return Results.File(task.SubmissionFile, task.SubmissionFileContentType ?? "application/octet-stream",
-            Path.GetFileName(task.SubmissionFileName ?? "submission"), enableRangeProcessing: false);
+        var file = WatermarkImageIfSupported(
+            task.SubmissionFile,
+            task.SubmissionFileContentType,
+            task.SubmissionFileName,
+            "Glenn Luna");
+        return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     }).RequireAuthorization();
 
 app.MapPost("/api/work/tasks", async (TaskRequest request, ClaimsPrincipal principal,
@@ -481,8 +487,12 @@ app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal pri
         if (submission.DesignFile is null) return Results.NotFound();
 
         context.Response.Headers.XContentTypeOptions = "nosniff";
-        return Results.File(submission.DesignFile, submission.DesignFileContentType ?? "application/octet-stream",
-            Path.GetFileName(submission.DesignFileName ?? "design-submission"), enableRangeProcessing: false);
+        var file = WatermarkImageIfSupported(
+            submission.DesignFile,
+            submission.DesignFileContentType,
+            submission.DesignFileName,
+            "Glenn Luna");
+        return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     }).RequireAuthorization();
 
 app.MapGet("/api/work/design-offers", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
@@ -786,6 +796,172 @@ static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? f
         _ => false
     };
 }
+
+static WatermarkedFile WatermarkImageIfSupported(byte[] bytes, string? contentType, string? fileName, string watermarkText)
+{
+    var safeFileName = Path.GetFileName(fileName ?? "submission");
+    var safeContentType = string.IsNullOrWhiteSpace(contentType)
+        ? "application/octet-stream"
+        : contentType.ToLowerInvariant();
+
+    if (!IsWatermarkableImage(safeContentType))
+    {
+        return new WatermarkedFile(bytes, safeContentType, safeFileName);
+    }
+
+    try
+    {
+        using var image = Image.Load<Rgba32>(bytes);
+        ApplyWatermark(image, watermarkText);
+
+        using var output = new MemoryStream();
+        image.SaveAsPng(output);
+
+        return new WatermarkedFile(
+            output.ToArray(),
+            "image/png",
+            BuildWatermarkedFileName(safeFileName));
+    }
+    catch
+    {
+        return new WatermarkedFile(bytes, safeContentType, safeFileName);
+    }
+}
+
+static bool IsWatermarkableImage(string? contentType) =>
+    contentType is "image/jpeg" or "image/png" or "image/webp";
+
+static string BuildWatermarkedFileName(string fileName)
+{
+    var name = Path.GetFileNameWithoutExtension(fileName);
+    return string.IsNullOrWhiteSpace(name)
+        ? "watermarked-image.png"
+        : $"{name}-watermarked.png";
+}
+
+static void ApplyWatermark(Image<Rgba32> image, string watermarkText)
+{
+    var text = string.IsNullOrWhiteSpace(watermarkText)
+        ? "Glenn Luna"
+        : watermarkText.Trim().ToUpperInvariant();
+    var scale = Math.Clamp(Math.Min(image.Width, image.Height) / 180, 2, 8);
+    var textWidth = MeasureBlockText(text, scale);
+    var textHeight = 7 * scale;
+    var stepX = textWidth + 44 * scale;
+    var stepY = textHeight + 36 * scale;
+    var shadow = new Rgba32(10, 18, 17, 72);
+    var light = new Rgba32(255, 255, 255, 82);
+
+    image.ProcessPixelRows(accessor =>
+    {
+        for (var y = -stepY; y < image.Height + stepY; y += stepY)
+        {
+            var offset = Math.Abs(y / Math.Max(stepY, 1)) % 2 == 0 ? 0 : stepX / 2;
+            for (var x = -offset; x < image.Width + stepX; x += stepX)
+            {
+                DrawBlockText(accessor, text, x + scale, y + scale, scale, shadow);
+                DrawBlockText(accessor, text, x, y, scale, light);
+            }
+        }
+    });
+}
+
+static int MeasureBlockText(string text, int scale)
+{
+    var width = 0;
+    foreach (var character in text)
+    {
+        width += (character == ' ' ? 4 : 6) * scale;
+    }
+    return Math.Max(width, scale);
+}
+
+static void DrawBlockText(PixelAccessor<Rgba32> accessor, string text, int x, int y, int scale, Rgba32 color)
+{
+    var cursor = x;
+    foreach (var character in text)
+    {
+        if (character == ' ')
+        {
+            cursor += 4 * scale;
+            continue;
+        }
+
+        var glyph = GetBlockGlyph(character);
+        for (var rowIndex = 0; rowIndex < glyph.Length; rowIndex++)
+        {
+            var row = glyph[rowIndex];
+            for (var columnIndex = 0; columnIndex < row.Length; columnIndex++)
+            {
+                if (row[columnIndex] != '1') continue;
+                DrawBlock(accessor, cursor + columnIndex * scale, y + rowIndex * scale, scale, color);
+            }
+        }
+
+        cursor += 6 * scale;
+    }
+}
+
+static void DrawBlock(PixelAccessor<Rgba32> accessor, int x, int y, int size, Rgba32 color)
+{
+    for (var blockY = 0; blockY < size; blockY++)
+    {
+        var targetY = y + blockY;
+        if (targetY < 0 || targetY >= accessor.Height) continue;
+
+        var row = accessor.GetRowSpan(targetY);
+        for (var blockX = 0; blockX < size; blockX++)
+        {
+            var targetX = x + blockX;
+            if (targetX < 0 || targetX >= row.Length) continue;
+            row[targetX] = BlendPixel(row[targetX], color);
+        }
+    }
+}
+
+static Rgba32 BlendPixel(Rgba32 destination, Rgba32 source)
+{
+    var alpha = source.A / 255f;
+    var inverse = 1f - alpha;
+
+    return new Rgba32(
+        (byte)Math.Clamp(source.R * alpha + destination.R * inverse, 0, 255),
+        (byte)Math.Clamp(source.G * alpha + destination.G * inverse, 0, 255),
+        (byte)Math.Clamp(source.B * alpha + destination.B * inverse, 0, 255),
+        destination.A);
+}
+
+static string[] GetBlockGlyph(char character) =>
+    character switch
+    {
+        'A' => ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+        'B' => ["11110", "10001", "10001", "11110", "10001", "10001", "11110"],
+        'C' => ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
+        'D' => ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+        'E' => ["11111", "10000", "10000", "11110", "10000", "10000", "11111"],
+        'F' => ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+        'G' => ["01111", "10000", "10000", "10111", "10001", "10001", "01111"],
+        'H' => ["10001", "10001", "10001", "11111", "10001", "10001", "10001"],
+        'I' => ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+        'J' => ["00111", "00010", "00010", "00010", "10010", "10010", "01100"],
+        'K' => ["10001", "10010", "10100", "11000", "10100", "10010", "10001"],
+        'L' => ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+        'M' => ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+        'N' => ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+        'O' => ["01110", "10001", "10001", "10001", "10001", "10001", "01110"],
+        'P' => ["11110", "10001", "10001", "11110", "10000", "10000", "10000"],
+        'Q' => ["01110", "10001", "10001", "10001", "10101", "10010", "01101"],
+        'R' => ["11110", "10001", "10001", "11110", "10100", "10010", "10001"],
+        'S' => ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+        'T' => ["11111", "00100", "00100", "00100", "00100", "00100", "00100"],
+        'U' => ["10001", "10001", "10001", "10001", "10001", "10001", "01110"],
+        'V' => ["10001", "10001", "10001", "10001", "10001", "01010", "00100"],
+        'W' => ["10001", "10001", "10001", "10101", "10101", "10101", "01010"],
+        'X' => ["10001", "10001", "01010", "00100", "01010", "10001", "10001"],
+        'Y' => ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+        'Z' => ["11111", "00001", "00010", "00100", "01000", "10000", "11111"],
+        _ => ["11111", "00001", "00010", "00100", "00000", "00100", "00100"],
+    };
 
 static KidDesignSubmissionResponse ToKidDesignSubmissionResponse(KidDesignSubmission submission) =>
     new(
@@ -1193,6 +1369,8 @@ internal sealed record QuoteStatusRequest(string? Status);
 internal sealed record TaskRequest(string? Title, string? Instructions, DateTime? DueAtUtc, string? AssignedToUserId);
 internal sealed record TaskStatusRequest(string Status);
 internal sealed record SubmissionRequest(string? Content, string? Notes, string? Link, string? FileName, string? FileContentType, string? FileBase64);
+
+internal sealed record WatermarkedFile(byte[] Bytes, string ContentType, string FileName);
 
 internal sealed record KidDesignSubmissionRequest(
     string? Title,
