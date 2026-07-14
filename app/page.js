@@ -22,16 +22,6 @@ const githubIcon = (
   </svg>
 );
 
-const facebookIcon = (
-  <svg
-    aria-hidden="true"
-    viewBox="0 0 24 24"
-    className="h-4 w-4 fill-current"
-  >
-    <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.88 3.77-3.88 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.62.77-1.62 1.56V12h2.76l-.44 2.89h-2.32v6.99A10 10 0 0 0 22 12" />
-  </svg>
-);
-
 export const metadata = {
   description:
     "Glenn Luna builds websites, web apps, and reliable digital systems with a strong focus on usability, SEO, infrastructure, and maintainable code.",
@@ -609,15 +599,6 @@ export default function Home() {
               >
                 {githubIcon}
                 GitHub
-              </a>
-              <a
-                href="https://www.facebook.com/glenn.luna.100104"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-white/14 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/12"
-              >
-                {facebookIcon}
-                Facebook
               </a>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import DesignerActions from "./designer-actions";
 
 export const metadata = {
   title: "Graphic Design Services",
@@ -65,20 +66,7 @@ export default function DesignerPage() {
             asset. I can help clean it up, rebuild it for the right format, or
             shape a new design from scratch.
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href={quoteHref}
-              className="inline-flex items-center justify-center rounded-full bg-[#152321] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_34px_rgba(21,35,33,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-            >
-              Request Design Quote
-            </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-6 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-[#f7f2ea]"
-            >
-              Update Graphics
-            </Link>
-          </div>
+          <DesignerActions quoteHref={quoteHref} />
         </div>
 
         <div className="fade-up rounded-[2rem] border border-black/8 bg-white p-5 shadow-[0_24px_70px_rgba(21,35,33,0.1)]">

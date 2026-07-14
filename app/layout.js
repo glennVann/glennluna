@@ -180,16 +180,6 @@ export default function RootLayout({ children }) {
       <path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.03c-3.34.73-4.04-1.41-4.04-1.41-.55-1.38-1.34-1.74-1.34-1.74-1.09-.74.08-.72.08-.72 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.8 1.3 3.49 1 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.94 0-1.31.47-2.39 1.24-3.23-.12-.31-.54-1.53.12-3.2 0 0 1.01-.32 3.3 1.23A11.4 11.4 0 0 1 12 6.3c1.02 0 2.05.14 3.01.41 2.28-1.55 3.29-1.23 3.29-1.23.66 1.67.24 2.89.12 3.2.77.84 1.24 1.92 1.24 3.23 0 4.62-2.8 5.64-5.48 5.93.43.37.82 1.1.82 2.22v3.29c0 .32.21.69.83.58A12 12 0 0 0 12 .5" />
     </svg>
   );
-  const facebookIcon = (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4 fill-current"
-    >
-      <path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.88 3.77-3.88 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.62.77-1.62 1.56V12h2.76l-.44 2.89h-2.32v6.99A10 10 0 0 0 22 12" />
-    </svg>
-  );
-
   return (
     <html
       lang="en"
@@ -341,15 +331,6 @@ export default function RootLayout({ children }) {
                 >
                   {githubIcon}
                   GitHub
-                </a>
-                <a
-                  href="https://www.facebook.com/glenn.luna.100104"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 transition hover:text-white"
-                >
-                  {facebookIcon}
-                  Facebook
                 </a>
               </div>
             </div>
