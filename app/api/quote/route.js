@@ -135,7 +135,12 @@ export async function POST(request) {
       );
     }
 
-    await saveAuthenticatedQuote(body);
+    let savedToDashboard = false;
+    try {
+      savedToDashboard = Boolean(await saveAuthenticatedQuote(body));
+    } catch (quoteSaveError) {
+      console.warn("Quote dashboard save failed:", quoteSaveError);
+    }
 
     const smtpUser = getRequiredEnv("SMTP_USER");
     const smtpPass = getRequiredEnv("SMTP_PASS");
@@ -258,7 +263,7 @@ export async function POST(request) {
       html: confirmationHtml,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, savedToDashboard });
   } catch (error) {
     console.error("Quote email send failed:", error);
 

@@ -214,7 +214,7 @@ export default function QuoteForm({
       setSubmitState({
         type: "success",
         message:
-          isSignedIn
+          isSignedIn && result.savedToDashboard
             ? "Quote request sent successfully and saved to your dashboard. I will review it and follow up soon."
             : "Quote request sent successfully. I will review it and follow up soon.",
       });
