@@ -80,20 +80,9 @@ export default function ProjectsPage() {
                   >
                     View Project Details
                   </Link>
-                  {project.url ? (
-                    <a
-                      href={project.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5"
-                    >
-                      Visit Live Project
-                    </a>
-                  ) : (
-                    <div className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321]">
-                      Internal Project
-                    </div>
-                  )}
+                  <div className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321]">
+                    Portfolio Project
+                  </div>
                 </div>
               </div>
 

@@ -36,7 +36,7 @@ export const projects = [
       caption:
         "High-level architecture illustrating the customer-facing web platform, mobile access paths, authentication, backend services, storage, and operational workflows supporting Tighomecare.",
     },
-    url: "https://tighomecare.ca",
+    url: null,
   },
   {
     slug: "feluna-realty-booking",
@@ -138,7 +138,7 @@ export const projects = [
     technologies: ["Next.js", "POS Integration", "Backend Workflows"],
     seoDescription:
       "Bubble Tea Brewers POS and website project with a PHP to Next.js migration, backend integration, and customer-facing improvements.",
-    url: "https://bubbleteabrewers.ca",
+    url: null,
   },
   {
     slug: "github-portfolio",
@@ -161,7 +161,7 @@ export const projects = [
     technologies: ["GitHub", "Open Source", "Portfolio Presentation"],
     seoDescription:
       "Public GitHub portfolio covering frontend, backend, full-stack applications, and practical software development work.",
-    url: "https://github.com/glennluna",
+    url: null,
   },
   {
     slug: "bindaddy-ca",
@@ -184,7 +184,7 @@ export const projects = [
     technologies: ["Full-Stack Platform", "Account Experience", "Scalable Delivery"],
     seoDescription:
       "Customer-facing digital platform with account flows, booking support, product operations, and stable full-stack architecture.",
-    url: "https://bindaddy.ca",
+    url: null,
   },
 ];
 

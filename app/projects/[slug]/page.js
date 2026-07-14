@@ -90,16 +90,9 @@ export default async function ProjectDetailPage({ params }) {
             >
               Back to Projects
             </Link>
-            {project.url ? (
-              <a
-                href={project.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-              >
-                Visit Live Project
-              </a>
-            ) : null}
+            <div className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white">
+              Portfolio Project
+            </div>
           </div>
         </header>
       </section>
