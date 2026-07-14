@@ -287,6 +287,9 @@ export default function RootLayout({ children }) {
                 <Link href="/kids-corner" className="transition hover:text-white">
                   Kids Corner
                 </Link>
+                <Link href="/kids-corner/policy" className="transition hover:text-white">
+                  Kids Corner Policy
+                </Link>
                 <Link href="/quote" className="transition hover:text-white">
                   Request Quote
                 </Link>

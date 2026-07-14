@@ -1,6 +1,7 @@
 "use client";
 
 import Script from "next/script";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
@@ -174,7 +175,11 @@ export default function KidsOfferGallery() {
           </h2>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-black/62">
             Offers go to an adult reviewer first. Buyer details are not shared
-            directly with a kid creator.
+            directly with a kid creator. Please read the{" "}
+            <Link href="/kids-corner/policy" className="font-semibold text-[#1b5e59] underline">
+              Kids Corner policy
+            </Link>{" "}
+            before sending an offer.
           </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -213,6 +218,10 @@ export default function KidsOfferGallery() {
           className="rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_18px_46px_rgba(21,35,33,0.08)]"
         >
           <h3 className="text-2xl font-semibold">Offer details</h3>
+          <p className="mt-2 text-sm leading-6 text-black/58">
+            This is a request, not an instant purchase. A parent reviewer or
+            admin handles the reply.
+          </p>
 
           {error && (
             <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">

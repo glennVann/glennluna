@@ -25,6 +25,12 @@ export default function sitemap() {
       priority: 0.75,
     },
     {
+      url: `${siteUrl}/kids-corner/policy`,
+      lastModified,
+      changeFrequency: "yearly",
+      priority: 0.5,
+    },
+    {
       url: `${siteUrl}/quote`,
       lastModified,
       changeFrequency: "monthly",
