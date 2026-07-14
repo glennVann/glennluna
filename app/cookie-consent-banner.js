@@ -4,15 +4,22 @@ import { useEffect, useState } from "react";
 
 const COOKIE_CONSENT_KEY = "glennluna-cookie-consent";
 
+function shouldShowCookieBanner() {
+  if (typeof window === "undefined") return false;
+  return !window.localStorage.getItem(COOKIE_CONSENT_KEY);
+}
+
 export default function CookieConsentBanner() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const savedChoice = window.localStorage.getItem(COOKIE_CONSENT_KEY);
-
-    if (!savedChoice) {
-      setIsVisible(true);
-    }
+    const onStorage = () => setIsVisible(shouldShowCookieBanner());
+    const syncTimer = window.setTimeout(onStorage, 0);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.clearTimeout(syncTimer);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   function saveChoice(choice) {

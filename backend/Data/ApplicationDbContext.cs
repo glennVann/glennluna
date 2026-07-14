@@ -9,6 +9,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 {
     public DbSet<TeamMember> TeamMembers => Set<TeamMember>();
     public DbSet<ContentTask> ContentTasks => Set<ContentTask>();
+    public DbSet<KidDesignSubmission> KidDesignSubmissions => Set<KidDesignSubmission>();
+    public DbSet<KidDesignOffer> KidDesignOffers => Set<KidDesignOffer>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -22,6 +24,36 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             .WithMany()
             .HasForeignKey(task => task.AssignedToUserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<KidDesignSubmission>()
+            .HasOne(submission => submission.OwnerUser)
+            .WithMany()
+            .HasForeignKey(submission => submission.OwnerUserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<KidDesignSubmission>()
+            .HasOne(submission => submission.ReviewerUser)
+            .WithMany()
+            .HasForeignKey(submission => submission.ReviewerUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<KidDesignSubmission>()
+            .HasIndex(submission => submission.Status);
+
+        builder.Entity<KidDesignOffer>()
+            .HasOne(offer => offer.KidDesignSubmission)
+            .WithMany(submission => submission.Offers)
+            .HasForeignKey(offer => offer.KidDesignSubmissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<KidDesignOffer>()
+            .HasOne(offer => offer.ReviewerUser)
+            .WithMany()
+            .HasForeignKey(offer => offer.ReviewerUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<KidDesignOffer>()
+            .HasIndex(offer => offer.Status);
 
         builder.Entity<TeamMember>()
             .HasOne(member => member.ApplicationUser)

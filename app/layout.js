@@ -234,12 +234,18 @@ export default function RootLayout({ children }) {
               >
                 Projects
               </Link>
-              <a
+              <Link
+                href="/kids-corner"
+                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
+              >
+                Kids Corner
+              </Link>
+              <Link
                 href="/#contact"
                 className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
               >
                 Contact
-              </a>
+              </Link>
               <Link
                 href="/quote"
                 className="rounded-full bg-[#152321] px-4 py-2 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(21,35,33,0.12)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
@@ -269,18 +275,21 @@ export default function RootLayout({ children }) {
                 Navigation
               </p>
               <div className="mt-4 flex flex-col gap-3 text-sm text-white/78">
-                <a href="/" className="transition hover:text-white">
+                <Link href="/" className="transition hover:text-white">
                   Home
-                </a>
-                <a href="/about" className="transition hover:text-white">
+                </Link>
+                <Link href="/about" className="transition hover:text-white">
                   About Me
-                </a>
-                <a href="/projects" className="transition hover:text-white">
+                </Link>
+                <Link href="/projects" className="transition hover:text-white">
                   Projects
-                </a>
-                <a href="/quote" className="transition hover:text-white">
+                </Link>
+                <Link href="/kids-corner" className="transition hover:text-white">
+                  Kids Corner
+                </Link>
+                <Link href="/quote" className="transition hover:text-white">
                   Request Quote
-                </a>
+                </Link>
               </div>
             </div>
 

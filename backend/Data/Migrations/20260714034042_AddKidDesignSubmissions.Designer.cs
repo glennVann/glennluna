@@ -4,6 +4,7 @@ using GlennLuna.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GlennLuna.Api.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714034042_AddKidDesignSubmissions")]
+    partial class AddKidDesignSubmissions
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,66 +175,6 @@ namespace GlennLuna.Api.Data.Migrations
                     b.ToTable("ContentTasks");
                 });
 
-            modelBuilder.Entity("GlennLuna.Api.Models.KidDesignOffer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("BuyerEmail")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("varchar(256)");
-
-                    b.Property<string>("BuyerName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("varchar(3)");
-
-                    b.Property<int>("KidDesignSubmissionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasMaxLength(1200)
-                        .HasColumnType("varchar(1200)");
-
-                    b.Property<decimal>("OfferAmount")
-                        .HasColumnType("decimal(10,2)");
-
-                    b.Property<DateTime?>("ReviewedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("ReviewerUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("varchar(450)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("KidDesignSubmissionId");
-
-                    b.HasIndex("ReviewerUserId");
-
-                    b.HasIndex("Status");
-
-                    b.ToTable("KidDesignOffers");
-                });
-
             modelBuilder.Entity("GlennLuna.Api.Models.KidDesignSubmission", b =>
                 {
                     b.Property<int>("Id")
@@ -239,9 +182,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .HasColumnType("int");
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<decimal?>("AskingPrice")
-                        .HasColumnType("decimal(10,2)");
 
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime(6)");
@@ -267,9 +207,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<bool>("IsForSale")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("OwnerUserId")
                         .IsRequired()
                         .HasMaxLength(450)
@@ -284,11 +221,6 @@ namespace GlennLuna.Api.Data.Migrations
                     b.Property<string>("ReviewerUserId")
                         .HasMaxLength(450)
                         .HasColumnType("varchar(450)");
-
-                    b.Property<string>("SaleCurrency")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("varchar(3)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -546,24 +478,6 @@ namespace GlennLuna.Api.Data.Migrations
                     b.Navigation("AssignedToUser");
                 });
 
-            modelBuilder.Entity("GlennLuna.Api.Models.KidDesignOffer", b =>
-                {
-                    b.HasOne("GlennLuna.Api.Models.KidDesignSubmission", "KidDesignSubmission")
-                        .WithMany("Offers")
-                        .HasForeignKey("KidDesignSubmissionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("GlennLuna.Api.Models.ApplicationUser", "ReviewerUser")
-                        .WithMany()
-                        .HasForeignKey("ReviewerUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("KidDesignSubmission");
-
-                    b.Navigation("ReviewerUser");
-                });
-
             modelBuilder.Entity("GlennLuna.Api.Models.KidDesignSubmission", b =>
                 {
                     b.HasOne("GlennLuna.Api.Models.ApplicationUser", "OwnerUser")
@@ -641,11 +555,6 @@ namespace GlennLuna.Api.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("GlennLuna.Api.Models.KidDesignSubmission", b =>
-                {
-                    b.Navigation("Offers");
                 });
 #pragma warning restore 612, 618
         }

@@ -190,8 +190,8 @@ app.MapPut("/api/work/users/{id}/role", async (string id, RoleRequest request, C
         var user = await users.FindByIdAsync(id);
         if (user is null) return Results.NotFound();
         var role = request.Role?.Trim();
-        if (role is not ("User" or "Content Writer" or "Worker"))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Content Writer, or Worker."] });
+        if (role is null || !IsValidAccountRole(role))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Content Writer, Worker, KidCreator, or ParentReviewer."] });
         user.Role = role;
         await users.UpdateAsync(user);
         return Results.Ok(new { user.Id, user.Email, user.DisplayName, user.Role });
@@ -300,6 +300,225 @@ app.MapPut("/api/work/tasks/{id:int}/status", async (int id, TaskStatusRequest r
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose Assigned, In Progress, Submitted, or Completed."] });
         task.Status = request.Status; await db.SaveChangesAsync(); return Results.NoContent();
     }).RequireAuthorization();
+
+app.MapGet("/api/work/designs", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
+    ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (!CanUseKidDesigns(user, adminEmail)) return Results.Ok(Array.Empty<KidDesignSubmissionResponse>());
+
+        var reviewer = CanReviewKidDesigns(user, adminEmail);
+        var query = db.KidDesignSubmissions.AsNoTracking()
+            .Include(submission => submission.OwnerUser)
+            .Include(submission => submission.ReviewerUser)
+            .AsQueryable();
+        if (!reviewer) query = query.Where(submission => submission.OwnerUserId == user.Id);
+
+        var submissions = await query
+            .OrderBy(submission => submission.Status == "Published")
+            .ThenByDescending(submission => submission.UpdatedAtUtc)
+            .ToListAsync();
+
+        return Results.Ok(submissions.Select(ToKidDesignSubmissionResponse));
+    }).RequireAuthorization();
+
+app.MapPost("/api/work/designs", async (KidDesignSubmissionRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (user.Role != "KidCreator") return Results.Forbid();
+
+        var errors = ValidateKidDesignSubmission(request, requireContent: request.Submit);
+        if (errors.Count > 0) return Results.ValidationProblem(errors);
+
+        var submission = new KidDesignSubmission { OwnerUserId = user.Id };
+        ApplyKidDesignSubmission(submission, request);
+        if (!TryApplyDesignFile(submission, request, out var fileError))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileError] });
+
+        if (request.Submit)
+        {
+            submission.Status = "Submitted";
+            submission.SubmittedAtUtc = DateTime.UtcNow;
+        }
+
+        db.KidDesignSubmissions.Add(submission);
+        await db.SaveChangesAsync();
+        return Results.Created($"/api/work/designs/{submission.Id}", ToKidDesignSubmissionResponse(submission));
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/designs/{id:int}", async (int id, KidDesignSubmissionRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (user.Role != "KidCreator") return Results.Forbid();
+
+        var submission = await db.KidDesignSubmissions
+            .Include(item => item.OwnerUser)
+            .SingleOrDefaultAsync(item => item.Id == id);
+        if (submission is null) return Results.NotFound();
+        if (submission.OwnerUserId != user.Id) return Results.Forbid();
+        if (submission.Status is "Approved" or "Published")
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Approved or published designs cannot be edited by the creator."] });
+
+        var errors = ValidateKidDesignSubmission(
+            request,
+            requireContent: request.Submit,
+            hasExistingFile: submission.DesignFile is { Length: > 0 });
+        if (errors.Count > 0) return Results.ValidationProblem(errors);
+
+        ApplyKidDesignSubmission(submission, request);
+        if (!TryApplyDesignFile(submission, request, out var fileError))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileError] });
+
+        if (request.Submit)
+        {
+            submission.Status = "Submitted";
+            submission.SubmittedAtUtc ??= DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+        return Results.Ok(ToKidDesignSubmissionResponse(submission));
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/designs/{id:int}/status", async (int id, KidDesignStatusRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (!CanReviewKidDesigns(user, adminEmail)) return Results.Forbid();
+
+        var submission = await db.KidDesignSubmissions
+            .Include(item => item.OwnerUser)
+            .Include(item => item.ReviewerUser)
+            .SingleOrDefaultAsync(item => item.Id == id);
+        if (submission is null) return Results.NotFound();
+
+        var status = request.Status?.Trim();
+        if (!IsValidKidDesignStatus(status))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose Draft, Submitted, Approved, or Published."] });
+        var saleErrors = ValidateKidDesignSaleSettings(request.IsForSale, request.AskingPrice, request.SaleCurrency, status);
+        if (saleErrors.Count > 0) return Results.ValidationProblem(saleErrors);
+
+        submission.Status = status!;
+        submission.UpdatedAtUtc = DateTime.UtcNow;
+        submission.ReviewerUserId = user.Id;
+        submission.ReviewedAtUtc = DateTime.UtcNow;
+        if (status == "Submitted") submission.SubmittedAtUtc ??= DateTime.UtcNow;
+        if (status == "Published") submission.PublishedAtUtc ??= DateTime.UtcNow;
+        if (status != "Published") submission.PublishedAtUtc = null;
+        ApplyKidDesignSaleSettings(submission, request.IsForSale, request.AskingPrice, request.SaleCurrency);
+
+        await db.SaveChangesAsync();
+        return Results.Ok(ToKidDesignSubmissionResponse(submission));
+    }).RequireAuthorization();
+
+app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users, ApplicationDbContext db, HttpContext context) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var submission = await db.KidDesignSubmissions.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id);
+        if (submission is null) return Results.NotFound();
+        if (!CanReviewKidDesigns(user, adminEmail) && submission.OwnerUserId != user.Id) return Results.Forbid();
+        if (submission.DesignFile is null) return Results.NotFound();
+
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        return Results.File(submission.DesignFile, submission.DesignFileContentType ?? "application/octet-stream",
+            Path.GetFileName(submission.DesignFileName ?? "design-submission"), enableRangeProcessing: false);
+    }).RequireAuthorization();
+
+app.MapGet("/api/work/design-offers", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
+    ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (!CanReviewKidDesigns(user, adminEmail)) return Results.Forbid();
+
+        var offers = await db.KidDesignOffers.AsNoTracking()
+            .Include(offer => offer.KidDesignSubmission)
+                .ThenInclude(submission => submission!.OwnerUser)
+            .Include(offer => offer.ReviewerUser)
+            .OrderBy(offer => offer.Status == "Accepted" || offer.Status == "Declined")
+            .ThenByDescending(offer => offer.CreatedAtUtc)
+            .ToListAsync();
+
+        return Results.Ok(offers.Select(ToKidDesignOfferResponse));
+    }).RequireAuthorization();
+
+app.MapPut("/api/work/design-offers/{id:int}/status", async (int id, KidDesignOfferStatusRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (!CanReviewKidDesigns(user, adminEmail)) return Results.Forbid();
+
+        var offer = await db.KidDesignOffers
+            .Include(item => item.KidDesignSubmission)
+                .ThenInclude(submission => submission!.OwnerUser)
+            .Include(item => item.ReviewerUser)
+            .SingleOrDefaultAsync(item => item.Id == id);
+        if (offer is null) return Results.NotFound();
+
+        var status = request.Status?.Trim();
+        if (!IsValidKidDesignOfferStatus(status))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose New, Reviewing, Accepted, or Declined."] });
+
+        offer.Status = status!;
+        offer.ReviewerUserId = user.Id;
+        offer.ReviewedAtUtc = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(ToKidDesignOfferResponse(offer));
+    }).RequireAuthorization();
+
+app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
+    {
+        var designs = await db.KidDesignSubmissions.AsNoTracking()
+            .Where(submission => submission.Status == "Published" && submission.IsForSale)
+            .OrderByDescending(submission => submission.PublishedAtUtc)
+            .Select(submission => new PublicKidDesignResponse(
+                submission.Id,
+                submission.Title,
+                submission.Description,
+                submission.AskingPrice,
+                submission.SaleCurrency))
+            .ToListAsync();
+
+        return Results.Ok(designs);
+    });
+
+app.MapPost("/api/kids-corner/offers", async (KidDesignOfferRequest request, ApplicationDbContext db) =>
+    {
+        var errors = ValidateKidDesignOffer(request);
+        if (errors.Count > 0) return Results.ValidationProblem(errors);
+
+        var design = await db.KidDesignSubmissions
+            .SingleOrDefaultAsync(submission =>
+                submission.Id == request.DesignId &&
+                submission.Status == "Published" &&
+                submission.IsForSale);
+        if (design is null) return Results.NotFound();
+
+        var offer = new KidDesignOffer
+        {
+            KidDesignSubmissionId = design.Id,
+            BuyerName = request.BuyerName!.Trim(),
+            BuyerEmail = request.BuyerEmail!.Trim().ToLowerInvariant(),
+            OfferAmount = request.OfferAmount,
+            Currency = NormalizeCurrency(request.Currency),
+            Message = request.Message?.Trim() ?? string.Empty
+        };
+
+        db.KidDesignOffers.Add(offer);
+        await db.SaveChangesAsync();
+
+        return Results.Created($"/api/kids-corner/offers/{offer.Id}", new { offer.Id, offer.Status });
+    });
 
 app.MapGet("/api/team", async (ApplicationDbContext dbContext) =>
     {
@@ -474,6 +693,27 @@ static bool IsTeamAdmin(ApplicationUser user, string adminEmail) =>
 static bool CanReceiveWork(ApplicationUser user) =>
     user.Role is "Content Writer" or "Worker";
 
+static bool IsValidAccountRole(string? role) =>
+    role is "User" or "Content Writer" or "Worker" or "KidCreator" or "ParentReviewer";
+
+static bool CanUseKidDesigns(ApplicationUser user, string adminEmail) =>
+    user.Role is "KidCreator" or "ParentReviewer" || IsTeamAdmin(user, adminEmail);
+
+static bool CanReviewKidDesigns(ApplicationUser user, string adminEmail) =>
+    user.Role == "ParentReviewer" || IsTeamAdmin(user, adminEmail);
+
+static bool IsValidKidDesignStatus(string? status) =>
+    status is "Draft" or "Submitted" or "Approved" or "Published";
+
+static bool IsValidKidDesignOfferStatus(string? status) =>
+    status is "New" or "Reviewing" or "Accepted" or "Declined";
+
+static string NormalizeCurrency(string? currency)
+{
+    var value = currency?.Trim().ToUpperInvariant();
+    return value is "USD" ? "USD" : "CAD";
+}
+
 static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? fileName)
 {
     if (bytes.Length == 0 || string.IsNullOrWhiteSpace(contentType) || string.IsNullOrWhiteSpace(fileName)) return false;
@@ -489,6 +729,178 @@ static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? f
         ("text/plain", ".txt") => !bytes.Contains((byte)0),
         _ => false
     };
+}
+
+static KidDesignSubmissionResponse ToKidDesignSubmissionResponse(KidDesignSubmission submission) =>
+    new(
+        submission.Id,
+        submission.Title,
+        submission.Description,
+        submission.DesignLink,
+        submission.Status,
+        submission.IsForSale,
+        submission.AskingPrice,
+        submission.SaleCurrency,
+        submission.DesignFile is { Length: > 0 },
+        submission.DesignFileName,
+        submission.CreatedAtUtc,
+        submission.UpdatedAtUtc,
+        submission.SubmittedAtUtc,
+        submission.ReviewedAtUtc,
+        submission.PublishedAtUtc,
+        submission.OwnerUserId,
+        submission.OwnerUser?.DisplayName ?? submission.OwnerUser?.Email,
+        submission.ReviewerUserId,
+        submission.ReviewerUser?.DisplayName ?? submission.ReviewerUser?.Email);
+
+static KidDesignOfferResponse ToKidDesignOfferResponse(KidDesignOffer offer) =>
+    new(
+        offer.Id,
+        offer.KidDesignSubmissionId,
+        offer.KidDesignSubmission?.Title ?? "Design submission",
+        offer.KidDesignSubmission?.OwnerUser?.DisplayName ?? offer.KidDesignSubmission?.OwnerUser?.Email,
+        offer.BuyerName,
+        offer.BuyerEmail,
+        offer.OfferAmount,
+        offer.Currency,
+        offer.Message,
+        offer.Status,
+        offer.CreatedAtUtc,
+        offer.ReviewedAtUtc,
+        offer.ReviewerUserId,
+        offer.ReviewerUser?.DisplayName ?? offer.ReviewerUser?.Email);
+
+static Dictionary<string, string[]> ValidateKidDesignSubmission(
+    KidDesignSubmissionRequest request,
+    bool requireContent,
+    bool hasExistingFile = false)
+{
+    var errors = new Dictionary<string, string[]>();
+    if (string.IsNullOrWhiteSpace(request.Title)) errors["title"] = ["Title is required."];
+    else if (request.Title.Trim().Length > 120) errors["title"] = ["Title must be 120 characters or fewer."];
+    if (request.Description?.Trim().Length > 2000) errors["description"] = ["Description must be 2000 characters or fewer."];
+
+    var link = request.DesignLink?.Trim() ?? string.Empty;
+    if (link.Length > 500 || (link.Length > 0 && (!Uri.TryCreate(link, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https"))))
+        errors["designLink"] = ["Use a valid http or https design link."];
+
+    if (requireContent &&
+        string.IsNullOrWhiteSpace(request.Description) &&
+        string.IsNullOrWhiteSpace(link) &&
+        string.IsNullOrWhiteSpace(request.FileBase64) &&
+        (!hasExistingFile || request.RemoveFile))
+    {
+        errors["submission"] = ["Add a description, link, or file before submitting for review."];
+    }
+
+    return errors;
+}
+
+static void ApplyKidDesignSubmission(KidDesignSubmission submission, KidDesignSubmissionRequest request)
+{
+    submission.Title = request.Title!.Trim();
+    submission.Description = request.Description?.Trim() ?? string.Empty;
+    submission.DesignLink = request.DesignLink?.Trim() ?? string.Empty;
+    submission.UpdatedAtUtc = DateTime.UtcNow;
+}
+
+static Dictionary<string, string[]> ValidateKidDesignSaleSettings(
+    bool isForSale,
+    decimal? askingPrice,
+    string? saleCurrency,
+    string? status)
+{
+    var errors = new Dictionary<string, string[]>();
+    if (isForSale && status != "Published")
+        errors["isForSale"] = ["Only published designs can be listed for sale."];
+    if (isForSale && (!askingPrice.HasValue || askingPrice <= 0 || askingPrice > 10000))
+        errors["askingPrice"] = ["Add an asking price between 0.01 and 10000."];
+    if (saleCurrency is not null && NormalizeCurrency(saleCurrency) != saleCurrency.Trim().ToUpperInvariant())
+        errors["saleCurrency"] = ["Choose CAD or USD."];
+    return errors;
+}
+
+static void ApplyKidDesignSaleSettings(
+    KidDesignSubmission submission,
+    bool isForSale,
+    decimal? askingPrice,
+    string? saleCurrency)
+{
+    submission.IsForSale = submission.Status == "Published" && isForSale;
+    submission.AskingPrice = submission.IsForSale ? askingPrice : null;
+    submission.SaleCurrency = NormalizeCurrency(saleCurrency);
+}
+
+static Dictionary<string, string[]> ValidateKidDesignOffer(KidDesignOfferRequest request)
+{
+    var errors = new Dictionary<string, string[]>();
+    if (request.DesignId <= 0) errors["designId"] = ["Choose a published design."];
+    if (string.IsNullOrWhiteSpace(request.BuyerName)) errors["buyerName"] = ["Your name is required."];
+    else if (request.BuyerName.Trim().Length > 100) errors["buyerName"] = ["Name must be 100 characters or fewer."];
+
+    if (string.IsNullOrWhiteSpace(request.BuyerEmail)) errors["buyerEmail"] = ["Email is required."];
+    else
+    {
+        try
+        {
+            _ = new MailAddress(request.BuyerEmail.Trim());
+        }
+        catch (FormatException)
+        {
+            errors["buyerEmail"] = ["Use a valid email address."];
+        }
+    }
+
+    if (request.OfferAmount <= 0 || request.OfferAmount > 10000)
+        errors["offerAmount"] = ["Offer amount must be between 0.01 and 10000."];
+    if (NormalizeCurrency(request.Currency) != request.Currency?.Trim().ToUpperInvariant())
+        errors["currency"] = ["Choose CAD or USD."];
+    if (request.Message?.Trim().Length > 1200)
+        errors["message"] = ["Message must be 1200 characters or fewer."];
+
+    return errors;
+}
+
+static bool TryApplyDesignFile(KidDesignSubmission submission, KidDesignSubmissionRequest request, out string error)
+{
+    error = string.Empty;
+    if (request.RemoveFile)
+    {
+        submission.DesignFile = null;
+        submission.DesignFileName = null;
+        submission.DesignFileContentType = null;
+        return true;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.FileBase64)) return true;
+
+    byte[] file;
+    try
+    {
+        file = Convert.FromBase64String(request.FileBase64);
+    }
+    catch (FormatException)
+    {
+        error = "The uploaded design file is invalid.";
+        return false;
+    }
+
+    if (file.Length > 5 * 1024 * 1024)
+    {
+        error = "The file must be 5 MB or smaller.";
+        return false;
+    }
+
+    if (!IsAllowedSubmissionFile(file, request.FileContentType, request.FileName))
+    {
+        error = "Upload a JPEG, PNG, WebP, PDF, Word (.docx), or text file.";
+        return false;
+    }
+
+    submission.DesignFile = file;
+    submission.DesignFileName = Path.GetFileName(request.FileName!);
+    submission.DesignFileContentType = request.FileContentType!.ToLowerInvariant();
+    return true;
 }
 
 static TeamMemberResponse ToTeamMemberResponse(TeamMember member) =>
@@ -621,6 +1033,76 @@ internal sealed record RoleRequest(string? Role);
 internal sealed record TaskRequest(string? Title, string? Instructions, DateTime? DueAtUtc, string? AssignedToUserId);
 internal sealed record TaskStatusRequest(string Status);
 internal sealed record SubmissionRequest(string? Content, string? Notes, string? Link, string? FileName, string? FileContentType, string? FileBase64);
+
+internal sealed record KidDesignSubmissionRequest(
+    string? Title,
+    string? Description,
+    string? DesignLink,
+    string? FileName,
+    string? FileContentType,
+    string? FileBase64,
+    bool Submit,
+    bool RemoveFile = false);
+
+internal sealed record KidDesignStatusRequest(
+    string? Status,
+    bool IsForSale,
+    decimal? AskingPrice,
+    string? SaleCurrency);
+
+internal sealed record KidDesignOfferRequest(
+    int DesignId,
+    string? BuyerName,
+    string? BuyerEmail,
+    decimal OfferAmount,
+    string? Currency,
+    string? Message);
+
+internal sealed record KidDesignOfferStatusRequest(string? Status);
+
+internal sealed record PublicKidDesignResponse(
+    int Id,
+    string Title,
+    string Description,
+    decimal? AskingPrice,
+    string SaleCurrency);
+
+internal sealed record KidDesignSubmissionResponse(
+    int Id,
+    string Title,
+    string Description,
+    string DesignLink,
+    string Status,
+    bool IsForSale,
+    decimal? AskingPrice,
+    string SaleCurrency,
+    bool HasDesignFile,
+    string? DesignFileName,
+    DateTime CreatedAtUtc,
+    DateTime UpdatedAtUtc,
+    DateTime? SubmittedAtUtc,
+    DateTime? ReviewedAtUtc,
+    DateTime? PublishedAtUtc,
+    string OwnerUserId,
+    string? OwnerName,
+    string? ReviewerUserId,
+    string? ReviewerName);
+
+internal sealed record KidDesignOfferResponse(
+    int Id,
+    int KidDesignSubmissionId,
+    string DesignTitle,
+    string? OwnerName,
+    string BuyerName,
+    string BuyerEmail,
+    decimal OfferAmount,
+    string Currency,
+    string Message,
+    string Status,
+    DateTime CreatedAtUtc,
+    DateTime? ReviewedAtUtc,
+    string? ReviewerUserId,
+    string? ReviewerName);
 
 internal sealed record TeamMemberRequest(
     string? Name,
