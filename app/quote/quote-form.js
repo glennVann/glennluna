@@ -23,6 +23,9 @@ const projectTypes = [
   "Internal Tool",
   "Full Custom App",
   "Infrastructure Setup",
+  "Graphic Design",
+  "Logo Design",
+  "Brand Refresh",
 ];
 
 const serviceOptions = [
@@ -32,6 +35,11 @@ const serviceOptions = [
   "Server Setup",
   "Networking Setup",
   "File Server Setup",
+  "Graphic Design",
+  "Logo Refresh",
+  "Brand Assets",
+  "Social Media Graphics",
+  "Print or Signage Graphics",
 ];
 
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
@@ -48,9 +56,29 @@ function resetTurnstile(widgetIdRef, setTurnstileToken) {
   }
 }
 
-export default function QuoteForm() {
-  const [form, setForm] = useState(initialForm);
-  const [selectedServices, setSelectedServices] = useState([]);
+function createInitialForm(initialProjectType) {
+  return {
+    ...initialForm,
+    projectType: projectTypes.includes(initialProjectType)
+      ? initialProjectType
+      : initialForm.projectType,
+  };
+}
+
+function getInitialServices(services) {
+  return Array.isArray(services)
+    ? services.filter((service) => serviceOptions.includes(service))
+    : [];
+}
+
+export default function QuoteForm({
+  initialProjectType = "",
+  initialServices = [],
+}) {
+  const [form, setForm] = useState(() => createInitialForm(initialProjectType));
+  const [selectedServices, setSelectedServices] = useState(() =>
+    getInitialServices(initialServices),
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitState, setSubmitState] = useState({
@@ -163,8 +191,8 @@ export default function QuoteForm() {
         message:
           "Quote request sent successfully. I will review it and follow up soon.",
       });
-      setForm(initialForm);
-      setSelectedServices([]);
+      setForm(createInitialForm(initialProjectType));
+      setSelectedServices(getInitialServices(initialServices));
       resetTurnstile(widgetIdRef, setTurnstileToken);
     } catch (error) {
       setSubmitState({

@@ -17,6 +17,9 @@ const serviceAreas = [
   "Domain Management and Setup",
   "Server Setup",
   "Networking Setup",
+  "Graphic Design",
+  "Logo Design",
+  "Brand Asset Design",
 ];
 
 const manrope = Manrope({
@@ -48,6 +51,9 @@ export const metadata = {
     "technical SEO",
     "server setup",
     "networking setup",
+    "graphic design",
+    "logo design",
+    "brand assets",
   ],
   authors: [{ name: "Glenn Luna", url: siteUrl }],
   creator: "Glenn Luna",
@@ -114,6 +120,8 @@ const structuredData = [
       "Technical SEO",
       "Server Setup",
       "Networking",
+      "Graphic Design",
+      "Logo Design",
     ],
   },
   {
@@ -235,6 +243,12 @@ export default function RootLayout({ children }) {
                 Projects
               </Link>
               <Link
+                href="/designer"
+                className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
+              >
+                Designer
+              </Link>
+              <Link
                 href="/kids-corner"
                 className="rounded-full border border-[#152321]/12 bg-white/80 px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-white"
               >
@@ -283,6 +297,9 @@ export default function RootLayout({ children }) {
                 </Link>
                 <Link href="/projects" className="transition hover:text-white">
                   Projects
+                </Link>
+                <Link href="/designer" className="transition hover:text-white">
+                  Designer
                 </Link>
                 <Link href="/kids-corner" className="transition hover:text-white">
                   Kids Corner

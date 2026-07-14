@@ -19,6 +19,12 @@ export default function sitemap() {
       priority: 0.9,
     },
     {
+      url: `${siteUrl}/designer`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
       url: `${siteUrl}/kids-corner`,
       lastModified,
       changeFrequency: "monthly",

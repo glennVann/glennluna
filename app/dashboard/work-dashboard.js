@@ -6,6 +6,7 @@ const ROLE_OPTIONS = [
   "User",
   "Content Writer",
   "Worker",
+  "Graphic Designer",
   "KidCreator",
   "ParentReviewer",
 ];
@@ -756,7 +757,10 @@ export default function WorkDashboard() {
   const canReviewDesigns = isAdmin || session.user.role === "ParentReviewer";
   const canUseDesigns = canCreateDesigns || canReviewDesigns;
   const workers = users.filter(
-    (user) => user.role === "Content Writer" || user.role === "Worker",
+    (user) =>
+      user.role === "Content Writer" ||
+      user.role === "Worker" ||
+      user.role === "Graphic Designer",
   );
   const doneTasks = tasks.filter((task) => task.status === "Completed");
   const dueTasks = tasks.filter(
@@ -1108,7 +1112,7 @@ export default function WorkDashboard() {
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">Account roles</h2>
                 <p className="mt-2 text-sm text-black/55">
-                  Workers handle tasks, Kid Creators upload private designs, and Parent Reviewers approve before publishing.
+                  Workers and Graphic Designers handle tasks, Kid Creators upload private designs, and Parent Reviewers approve before publishing.
                 </p>
               </div>
               <button
@@ -1138,6 +1142,7 @@ export default function WorkDashboard() {
               <p><span className="font-semibold text-[#152321]">User:</span> Standard account access.</p>
               <p><span className="font-semibold text-[#152321]">Worker:</span> Receives assigned tasks.</p>
               <p><span className="font-semibold text-[#152321]">Content Writer:</span> Receives writing tasks.</p>
+              <p><span className="font-semibold text-[#152321]">Graphic Designer:</span> Receives graphics tasks and submits updated design files.</p>
               <p><span className="font-semibold text-[#152321]">KidCreator:</span> Creates and edits private design submissions.</p>
               <p className="sm:col-span-2"><span className="font-semibold text-[#152321]">ParentReviewer:</span> Reviews kid submissions and controls approval or publication.</p>
             </div>
@@ -1253,7 +1258,7 @@ export default function WorkDashboard() {
             </select>
             {workers.length === 0 && (
               <p className="mt-2 text-xs text-red-700">
-                Assign a Worker or Content Writer role before creating a task.
+                Assign a Worker, Content Writer, or Graphic Designer role before creating a task.
               </p>
             )}
 

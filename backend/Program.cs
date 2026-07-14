@@ -191,7 +191,7 @@ app.MapPut("/api/work/users/{id}/role", async (string id, RoleRequest request, C
         if (user is null) return Results.NotFound();
         var role = request.Role?.Trim();
         if (role is null || !IsValidAccountRole(role))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Content Writer, Worker, KidCreator, or ParentReviewer."] });
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["role"] = ["Choose User, Content Writer, Worker, Graphic Designer, KidCreator, or ParentReviewer."] });
         user.Role = role;
         await users.UpdateAsync(user);
         return Results.Ok(new { user.Id, user.Email, user.DisplayName, user.Role });
@@ -691,10 +691,10 @@ static bool IsTeamAdmin(ApplicationUser user, string adminEmail) =>
     string.Equals(user.Email, adminEmail, StringComparison.OrdinalIgnoreCase);
 
 static bool CanReceiveWork(ApplicationUser user) =>
-    user.Role is "Content Writer" or "Worker";
+    user.Role is "Content Writer" or "Worker" or "Graphic Designer";
 
 static bool IsValidAccountRole(string? role) =>
-    role is "User" or "Content Writer" or "Worker" or "KidCreator" or "ParentReviewer";
+    role is "User" or "Content Writer" or "Worker" or "Graphic Designer" or "KidCreator" or "ParentReviewer";
 
 static bool CanUseKidDesigns(ApplicationUser user, string adminEmail) =>
     user.Role is "KidCreator" or "ParentReviewer" || IsTeamAdmin(user, adminEmail);
