@@ -39,7 +39,7 @@ const serviceOptions = [
   "Logo Refresh",
   "Brand Assets",
   "Social Media Graphics",
-  "Print or Signage Graphics",
+  "Website Graphics",
 ];
 
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";

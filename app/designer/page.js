@@ -4,14 +4,14 @@ import Link from "next/link";
 export const metadata = {
   title: "Graphic Design Services",
   description:
-    "Request graphic design work from Glenn Luna for logos, brand assets, social media graphics, posters, signage, and visual updates.",
+    "Request graphic design work from Glenn Luna for logos, brand assets, social media graphics, website visuals, and digital design updates.",
   alternates: {
     canonical: "/designer",
   },
   openGraph: {
     title: "Graphic Design Services | Glenn Luna",
     description:
-      "Design support for logos, refreshed graphics, social posts, print pieces, and brand assets.",
+      "Design support for logos, refreshed graphics, social posts, website visuals, and brand assets.",
     url: "https://glennluna.bindaddy.ca/designer",
   },
   twitter: {
@@ -34,8 +34,8 @@ const designServices = [
     text: "Post templates, launch graphics, profile banners, simple campaign visuals, and reusable layouts.",
   },
   {
-    title: "Print and signage graphics",
-    text: "Posters, menus, flyers, window signs, simple boards, and files prepared for print or sign production.",
+    title: "Digital brand assets",
+    text: "Reusable graphics for profiles, banners, thumbnails, simple campaigns, and online brand consistency.",
   },
   {
     title: "Website graphics",
@@ -61,8 +61,8 @@ export default function DesignerPage() {
             Update your graphics or request new design work.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-black/66">
-            Bring an old logo, poster, social graphic, website image, or print
-            file. I can help clean it up, rebuild it for the right format, or
+            Bring an old logo, social graphic, website image, or digital brand
+            asset. I can help clean it up, rebuild it for the right format, or
             shape a new design from scratch.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -128,9 +128,9 @@ export default function DesignerPage() {
                   </p>
                 </div>
                 <div className="rounded-[1.5rem] bg-[#edf4f1] p-5">
-                  <p className="text-sm font-semibold">Print</p>
+                  <p className="text-sm font-semibold">Brand assets</p>
                   <p className="mt-2 text-sm leading-6 text-black/58">
-                    Flyers, menus, signs, posters, and production-ready files.
+                    Logo files, profile images, thumbnails, and reusable visual pieces.
                   </p>
                 </div>
               </div>
