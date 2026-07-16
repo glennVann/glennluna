@@ -198,14 +198,15 @@ export default function KidsOfferGallery() {
 
       <div>
         <p className="font-mono text-xs uppercase tracking-[0.24em] text-[#1b5e59]">
-          Published for sale
+          Published gallery
         </p>
         <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-          Make an offer on approved work.
+          See approved work and make offers when available.
         </h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-black/62">
-          Offers go to an adult reviewer first. Buyer details are not shared
-          directly with a kid creator. Please read the{" "}
+          Published designs can appear here even when they are not for sale.
+          If an adult reviewer marks a design for offers, visitors can send an
+          offer that goes to a parent reviewer or admin first. Please read the{" "}
           <Link href="/kids-corner/policy" className="font-semibold text-[#1b5e59] underline">
             Kids Corner policy
           </Link>{" "}
@@ -215,6 +216,7 @@ export default function KidsOfferGallery() {
         <div className="mt-8 grid gap-5 lg:grid-cols-2">
           {designs.map((design) => {
             const isSelected = selectedDesignId === String(design.id);
+            const canMakeOffer = Boolean(design.isForSale);
 
             return (
               <article
@@ -231,19 +233,27 @@ export default function KidsOfferGallery() {
                       {design.description || "Published Kids Corner design."}
                     </p>
                     <p className="mt-4 text-sm font-semibold text-[#1b5e59]">
-                      Asking {formatPrice(design.askingPrice, design.saleCurrency)}
+                      {canMakeOffer
+                        ? `Asking ${formatPrice(design.askingPrice, design.saleCurrency)}`
+                        : "Published for viewing"}
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => openOfferForm(design.id)}
-                    className="shrink-0 rounded-full bg-[#152321] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-                  >
-                    {isSelected ? "Close offer" : "Make an offer"}
-                  </button>
+                  {canMakeOffer ? (
+                    <button
+                      type="button"
+                      onClick={() => openOfferForm(design.id)}
+                      className="shrink-0 rounded-full bg-[#152321] px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
+                    >
+                      {isSelected ? "Close offer" : "Make an offer"}
+                    </button>
+                  ) : (
+                    <span className="shrink-0 rounded-full border border-[#152321]/12 bg-[#f7f2ea] px-5 py-2.5 text-sm font-semibold text-[#152321]/70">
+                      Not for sale
+                    </span>
+                  )}
                 </div>
 
-                {isSelected && (
+                {isSelected && canMakeOffer && (
                   <form
                     onSubmit={submitOffer}
                     className="mt-5 border-t border-black/10 pt-5"
@@ -362,7 +372,7 @@ export default function KidsOfferGallery() {
 
           {designs.length === 0 && (
             <p className="rounded-[1.5rem] border border-dashed border-black/12 bg-white/70 px-4 py-8 text-center text-sm text-black/45 lg:col-span-2">
-              No designs are listed for offers yet.
+              No published designs yet.
             </p>
           )}
         </div>

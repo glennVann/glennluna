@@ -542,12 +542,13 @@ app.MapPut("/api/work/design-offers/{id:int}/status", async (int id, KidDesignOf
 app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
     {
         var designs = await db.KidDesignSubmissions.AsNoTracking()
-            .Where(submission => submission.Status == "Published" && submission.IsForSale)
+            .Where(submission => submission.Status == "Published")
             .OrderByDescending(submission => submission.PublishedAtUtc)
             .Select(submission => new PublicKidDesignResponse(
                 submission.Id,
                 submission.Title,
                 submission.Description,
+                submission.IsForSale,
                 submission.AskingPrice,
                 submission.SaleCurrency))
             .ToListAsync();
@@ -1402,6 +1403,7 @@ internal sealed record PublicKidDesignResponse(
     int Id,
     string Title,
     string Description,
+    bool IsForSale,
     decimal? AskingPrice,
     string SaleCurrency);
 
