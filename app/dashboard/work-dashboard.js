@@ -743,6 +743,7 @@ function OfferCard({ offer, savingOfferId, onStatusChange }) {
 export default function WorkDashboard() {
   const roleDialogRef = useRef(null);
   const taskDialogRef = useRef(null);
+  const designDialogRef = useRef(null);
   const [session, setSession] = useState(null);
   const [quotes, setQuotes] = useState([]);
   const [tasks, setTasks] = useState([]);
@@ -938,6 +939,7 @@ export default function WorkDashboard() {
 
       if (!id) {
         form.reset();
+        designDialogRef.current?.close();
       }
 
       setMessage(submit ? "Design submitted for review." : "Design draft saved.");
@@ -1232,7 +1234,20 @@ export default function WorkDashboard() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              {canCreateDesigns && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError("");
+                    setMessage("");
+                    designDialogRef.current?.showModal();
+                  }}
+                  className="rounded-full bg-[#152321] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(21,35,33,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
+                >
+                  Start a new design
+                </button>
+              )}
               {designCounts.map((item) => (
                 <div key={item.status} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#152321]">
                   {item.status}: {item.count}
@@ -1293,101 +1308,6 @@ export default function WorkDashboard() {
               ))}
             </div>
           </div>
-
-          {canCreateDesigns && (
-            <form
-              onSubmit={(event) => saveDesign(event)}
-              className="mt-8 rounded-[1.75rem] border border-black/8 bg-white p-5 shadow-[0_14px_36px_rgba(21,35,33,0.06)]"
-            >
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h3 className="text-2xl font-semibold">Start a new design</h3>
-                  <p className="mt-2 text-sm text-black/58">
-                    Add a title, a short description, a link, or a file. Save it as a draft until it is ready.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-semibold" htmlFor="new-design-title">
-                    Project title
-                  </label>
-                  <input
-                    id="new-design-title"
-                    name="title"
-                    maxLength={120}
-                    required
-                    placeholder="My poster project"
-                    className="mt-2 w-full rounded-xl border border-black/10 bg-white p-3"
-                  />
-                </div>
-
-                <div className="lg:col-span-2">
-                  <label className="block text-sm font-semibold" htmlFor="new-design-description">
-                    Description
-                  </label>
-                  <textarea
-                    id="new-design-description"
-                    name="description"
-                    maxLength={2000}
-                    placeholder="Tell us what you made and what idea it is based on."
-                    className="mt-2 min-h-32 w-full rounded-xl border border-black/10 bg-white p-3"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold" htmlFor="new-design-link">
-                    Design link
-                  </label>
-                  <input
-                    id="new-design-link"
-                    name="designLink"
-                    type="url"
-                    maxLength={500}
-                    placeholder="https://"
-                    className="mt-2 w-full rounded-xl border border-black/10 bg-white p-3"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold" htmlFor="new-design-file">
-                    Upload file
-                  </label>
-                  <input
-                    id="new-design-file"
-                    name="file"
-                    type="file"
-                    accept={DESIGN_FILE_ACCEPT}
-                    className="mt-2 block w-full text-sm"
-                  />
-                </div>
-              </div>
-
-              <p className="mt-3 text-xs text-black/50">
-                JPEG, PNG, WebP, PDF, DOCX, or TXT. Maximum 5 MB.
-              </p>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="submit"
-                  value="draft"
-                  disabled={savingDesignKey === "new-design"}
-                  className="rounded-full border border-[#152321]/15 bg-white px-5 py-2.5 text-sm font-semibold text-[#152321] disabled:opacity-50"
-                >
-                  {savingDesignKey === "new-design" ? "Saving..." : "Save draft"}
-                </button>
-                <button
-                  type="submit"
-                  value="submit"
-                  disabled={savingDesignKey === "new-design"}
-                  className="rounded-full bg-[#152321] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
-                >
-                  {savingDesignKey === "new-design" ? "Saving..." : "Submit for review"}
-                </button>
-              </div>
-            </form>
-          )}
 
           <div className="mt-8">
             <h3 className="text-2xl font-semibold">
@@ -1506,6 +1426,132 @@ export default function WorkDashboard() {
           ))}
         </div>
       </section>
+
+      {canCreateDesigns && (
+        <dialog
+          ref={designDialogRef}
+          onClick={(event) => {
+            if (event.target === designDialogRef.current) {
+              designDialogRef.current.close();
+            }
+          }}
+          className="m-auto max-h-[92dvh] w-[min(94vw,44rem)] overflow-y-auto rounded-[1.5rem] border border-black/10 bg-[#fffdfa] p-0 text-[#152321] shadow-[0_30px_90px_rgba(21,35,33,0.28)] backdrop:bg-[#07111f]/60 backdrop:backdrop-blur-sm sm:rounded-[2rem]"
+        >
+          <form onSubmit={(event) => saveDesign(event)} className="p-5 sm:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-[#1b5e59]">
+                  Kids Corner studio
+                </p>
+                <h2 className="mt-2 text-2xl font-semibold">Start a new design</h2>
+                <p className="mt-2 text-sm leading-6 text-black/58">
+                  Add a title, description, link, or file. Save a draft first, or submit when it is ready for review.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => designDialogRef.current?.close()}
+                className="shrink-0 rounded-full border border-black/10 px-3 py-1.5 text-sm hover:bg-black/5"
+              >
+                Close
+              </button>
+            </div>
+
+            {error && (
+              <p className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">
+                {error}
+              </p>
+            )}
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold" htmlFor="modal-new-design-title">
+                  Project title
+                </label>
+                <input
+                  id="modal-new-design-title"
+                  name="title"
+                  maxLength={120}
+                  required
+                  autoFocus
+                  placeholder="My poster project"
+                  className="mt-2 w-full rounded-xl border border-black/10 bg-white p-3"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-semibold" htmlFor="modal-new-design-description">
+                  Description
+                </label>
+                <textarea
+                  id="modal-new-design-description"
+                  name="description"
+                  maxLength={2000}
+                  placeholder="Tell us what you made and what idea it is based on."
+                  className="mt-2 min-h-32 w-full rounded-xl border border-black/10 bg-white p-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold" htmlFor="modal-new-design-link">
+                  Design link
+                </label>
+                <input
+                  id="modal-new-design-link"
+                  name="designLink"
+                  type="url"
+                  maxLength={500}
+                  placeholder="https://"
+                  className="mt-2 w-full rounded-xl border border-black/10 bg-white p-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold" htmlFor="modal-new-design-file">
+                  Upload file
+                </label>
+                <input
+                  id="modal-new-design-file"
+                  name="file"
+                  type="file"
+                  accept={DESIGN_FILE_ACCEPT}
+                  className="mt-2 block w-full text-sm"
+                />
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs text-black/50">
+              JPEG, PNG, WebP, PDF, DOCX, or TXT. Maximum 5 MB.
+            </p>
+
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => designDialogRef.current?.close()}
+                className="rounded-full border border-[#152321]/15 px-5 py-2.5 text-sm font-semibold hover:bg-[#f3ece0]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                value="draft"
+                disabled={savingDesignKey === "new-design"}
+                className="rounded-full border border-[#152321]/15 bg-white px-5 py-2.5 text-sm font-semibold text-[#152321] disabled:opacity-50"
+              >
+                {savingDesignKey === "new-design" ? "Saving..." : "Save draft"}
+              </button>
+              <button
+                type="submit"
+                value="submit"
+                disabled={savingDesignKey === "new-design"}
+                className="rounded-full bg-[#152321] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {savingDesignKey === "new-design" ? "Saving..." : "Submit for review"}
+              </button>
+            </div>
+          </form>
+        </dialog>
+      )}
 
       {isAdmin && (
         <dialog
