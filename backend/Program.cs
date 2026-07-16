@@ -500,6 +500,37 @@ app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal pri
         return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     }).RequireAuthorization();
 
+app.MapPut("/api/work/designs/{id:int}/file", async (int id, KidDesignFileRequest request,
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+        if (!CanReviewKidDesigns(user, adminEmail)) return Results.Forbid();
+
+        var submission = await db.KidDesignSubmissions
+            .Include(item => item.OwnerUser)
+            .Include(item => item.ReviewerUser)
+            .SingleOrDefaultAsync(item => item.Id == id);
+        if (submission is null) return Results.NotFound();
+
+        if (!TryApplyDesignPreviewFile(submission, request, out var fileError))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileError] });
+
+        submission.UpdatedAtUtc = DateTime.UtcNow;
+        submission.ReviewerUserId = user.Id;
+        submission.ReviewedAtUtc = DateTime.UtcNow;
+        if (!HasWatermarkableDesignFile(submission) && submission.Status == "Published")
+        {
+            submission.Status = "Approved";
+            submission.PublishedAtUtc = null;
+            submission.IsForSale = false;
+            submission.AskingPrice = null;
+        }
+
+        await db.SaveChangesAsync();
+        return Results.Ok(ToKidDesignSubmissionResponse(submission));
+    }).RequireAuthorization();
+
 app.MapGet("/api/work/design-offers", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users,
     ApplicationDbContext db) =>
     {
@@ -1262,6 +1293,53 @@ static bool TryApplyDesignFile(KidDesignSubmission submission, KidDesignSubmissi
     return true;
 }
 
+static bool TryApplyDesignPreviewFile(KidDesignSubmission submission, KidDesignFileRequest request, out string error)
+{
+    error = string.Empty;
+    if (request.RemoveFile)
+    {
+        submission.DesignFile = null;
+        submission.DesignFileName = null;
+        submission.DesignFileContentType = null;
+        return true;
+    }
+
+    if (string.IsNullOrWhiteSpace(request.FileBase64))
+    {
+        error = "Upload a JPEG, PNG, or WebP image for the public preview.";
+        return false;
+    }
+
+    byte[] file;
+    try
+    {
+        file = Convert.FromBase64String(request.FileBase64);
+    }
+    catch (FormatException)
+    {
+        error = "The uploaded preview image is invalid.";
+        return false;
+    }
+
+    if (file.Length > 5 * 1024 * 1024)
+    {
+        error = "The preview image must be 5 MB or smaller.";
+        return false;
+    }
+
+    if (!IsAllowedSubmissionFile(file, request.FileContentType, request.FileName) ||
+        !IsWatermarkableImage(request.FileContentType?.ToLowerInvariant()))
+    {
+        error = "Upload a JPEG, PNG, or WebP image for the public preview.";
+        return false;
+    }
+
+    submission.DesignFile = file;
+    submission.DesignFileName = Path.GetFileName(request.FileName!);
+    submission.DesignFileContentType = request.FileContentType!.ToLowerInvariant();
+    return true;
+}
+
 static TeamMemberResponse ToTeamMemberResponse(TeamMember member) =>
     new(
         member.Id,
@@ -1416,6 +1494,12 @@ internal sealed record KidDesignSubmissionRequest(
     string? FileContentType,
     string? FileBase64,
     bool Submit,
+    bool RemoveFile = false);
+
+internal sealed record KidDesignFileRequest(
+    string? FileName,
+    string? FileContentType,
+    string? FileBase64,
     bool RemoveFile = false);
 
 internal sealed record KidDesignStatusRequest(

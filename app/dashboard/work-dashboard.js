@@ -46,6 +46,7 @@ const DESIGN_KANBAN_COLUMNS = [
   },
 ];
 const OFFER_STATUS_OPTIONS = ["New", "Reviewing", "Accepted", "Declined"];
+const DESIGN_IMAGE_ACCEPT = "image/jpeg,image/png,image/webp";
 const DESIGN_FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.docx";
 
@@ -126,6 +127,27 @@ async function buildDesignPayload(form, submit) {
     fileBase64: file instanceof File && file.size ? await readFile(file) : null,
     removeFile: data.get("removeFile") === "on",
     submit,
+  };
+}
+
+async function buildDesignFilePayload(form) {
+  const data = new FormData(form);
+  const file = data.get("file");
+  const removeFile = data.get("removeFile") === "on";
+
+  if (!removeFile && !(file instanceof File && file.size)) {
+    throw new Error("Choose a JPEG, PNG, or WebP image first.");
+  }
+
+  if (file instanceof File && file.size > 5 * 1024 * 1024) {
+    throw new Error("The preview image must be 5 MB or smaller.");
+  }
+
+  return {
+    fileName: file instanceof File && file.size ? file.name : null,
+    fileContentType: file instanceof File && file.size ? file.type : null,
+    fileBase64: file instanceof File && file.size ? await readFile(file) : null,
+    removeFile,
   };
 }
 
@@ -320,6 +342,7 @@ function KidDesignCard({
   savingKey,
   statusSavingId,
   onSave,
+  onFileSave,
   onReviewSave,
 }) {
   const isOwner = design.ownerUserId === currentUserId;
@@ -486,6 +509,37 @@ function KidDesignCard({
             </a>
           )}
         </div>
+      )}
+
+      {canReview && (
+        <form onSubmit={(event) => onFileSave(event, design.id)} className="mt-5 rounded-2xl border border-black/8 bg-[#fbfaf6] p-4">
+          <h4 className="font-semibold">Public preview image</h4>
+          <p className="mt-2 text-xs leading-5 text-black/55">
+            Upload or replace the image shown in Kids Corner. Public previews are watermarked automatically.
+          </p>
+          <input
+            name="file"
+            type="file"
+            accept={DESIGN_IMAGE_ACCEPT}
+            className="mt-3 block w-full text-sm"
+          />
+          {design.hasDesignFile && (
+            <label className="mt-3 flex items-center gap-2 text-sm text-black/60">
+              <input type="checkbox" name="removeFile" className="h-4 w-4 rounded border-black/20" />
+              Remove current preview file
+            </label>
+          )}
+          <p className="mt-2 text-xs text-black/45">
+            JPEG, PNG, or WebP only. Maximum 5 MB.
+          </p>
+          <button
+            type="submit"
+            disabled={savingKey === "design-file-" + design.id}
+            className="mt-3 rounded-full border border-[#152321]/15 bg-white px-4 py-2 text-sm font-semibold text-[#152321] disabled:opacity-50"
+          >
+            {savingKey === "design-file-" + design.id ? "Saving..." : "Save preview image"}
+          </button>
+        </form>
       )}
 
       {canReview && (
@@ -890,6 +944,32 @@ export default function WorkDashboard() {
       await load();
     } catch (designError) {
       setError(designError.message);
+    } finally {
+      setSavingDesignKey("");
+    }
+  }
+
+  async function saveDesignFile(event, id) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const savingKey = "design-file-" + id;
+
+    try {
+      setError("");
+      setSavingDesignKey(savingKey);
+
+      const payload = await buildDesignFilePayload(form);
+      await api("/api/work/designs/" + id + "/file", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      form.reset();
+      setMessage("Design preview image updated.");
+      await load();
+    } catch (fileError) {
+      setError(fileError.message);
     } finally {
       setSavingDesignKey("");
     }
@@ -1329,6 +1409,7 @@ export default function WorkDashboard() {
                   savingKey={savingDesignKey}
                   statusSavingId={savingDesignStatusId}
                   onSave={saveDesign}
+                  onFileSave={saveDesignFile}
                   onReviewSave={saveDesignReview}
                 />
               ))}

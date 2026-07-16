@@ -36,3 +36,37 @@ export async function GET(_request, { params }) {
     return NextResponse.json({ error: "The work service is unavailable." }, { status: 502 });
   }
 }
+
+export async function PUT(request, { params }) {
+  const token = (await cookies()).get(accessCookie)?.value;
+  if (!token) {
+    return NextResponse.json({ error: "You must be signed in." }, { status: 401 });
+  }
+
+  const { id } = await params;
+
+  try {
+    const response = await fetch(`${authApiUrl}/api/work/designs/${id}/file`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: await request.text(),
+      cache: "no-store",
+    });
+    const body = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const validation = body.errors ? Object.values(body.errors).flat().join(" ") : "";
+      return NextResponse.json(
+        { error: validation || body.detail || "The design preview could not be updated." },
+        { status: response.status },
+      );
+    }
+
+    return NextResponse.json(body, { status: response.status });
+  } catch {
+    return NextResponse.json({ error: "The work service is unavailable." }, { status: 502 });
+  }
+}
