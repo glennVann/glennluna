@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { authApiUrl } from "../_backend";
+import { verifyTurnstileRequest } from "../_turnstile";
 
 export async function POST(request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, turnstileToken } = await request.json();
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
     }
+    const turnstileError = await verifyTurnstileRequest(request, turnstileToken);
+    if (turnstileError) return turnstileError;
 
     const response = await fetch(`${authApiUrl}/api/auth/register`, {
       method: "POST",

@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import Script from "next/script";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const AUTH_CHANGED_EVENT = "glennluna:auth-changed";
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
 
 function publishAuthChange(user) {
   window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT, { detail: { user } }));
@@ -28,9 +30,38 @@ function readImage(file) {
   });
 }
 
+function resetTurnstile(widgetIdRef, setTurnstileToken) {
+  setTurnstileToken("");
+
+  if (
+    typeof window !== "undefined" &&
+    window.turnstile &&
+    widgetIdRef.current !== null
+  ) {
+    window.turnstile.reset(widgetIdRef.current);
+  }
+}
+
+function removeTurnstile(widgetIdRef, setTurnstileToken) {
+  setTurnstileToken("");
+
+  if (
+    typeof window !== "undefined" &&
+    window.turnstile &&
+    typeof window.turnstile.remove === "function" &&
+    widgetIdRef.current !== null
+  ) {
+    window.turnstile.remove(widgetIdRef.current);
+  }
+
+  widgetIdRef.current = null;
+}
+
 export default function NavbarAuth() {
   const dialogRef = useRef(null);
   const profileDialogRef = useRef(null);
+  const turnstileRef = useRef(null);
+  const turnstileWidgetIdRef = useRef(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +73,32 @@ export default function NavbarAuth() {
   const [profileError, setProfileError] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
   const [photoVersion, setPhotoVersion] = useState(0);
+  const [turnstileToken, setTurnstileToken] = useState("");
+
+  const renderTurnstileWidget = useCallback(() => {
+    if (
+      !turnstileSiteKey ||
+      !turnstileRef.current ||
+      !window.turnstile ||
+      turnstileWidgetIdRef.current !== null
+    ) {
+      return;
+    }
+
+    turnstileWidgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: turnstileSiteKey,
+      theme: "light",
+      callback(token) {
+        setTurnstileToken(token);
+      },
+      "expired-callback"() {
+        setTurnstileToken("");
+      },
+      "error-callback"() {
+        setTurnstileToken("");
+      },
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -59,28 +116,45 @@ export default function NavbarAuth() {
     return () => { active = false; };
   }, []);
 
+  useEffect(() => {
+    renderTurnstileWidget();
+  }, [mode, renderTurnstileWidget]);
+
   async function handleLogin(event) {
     event.preventDefault();
     setSubmitting(true);
     setError("");
     const formData = new FormData(event.currentTarget);
+    if (!turnstileSiteKey) {
+      setError("Verification is not configured yet.");
+      setSubmitting(false);
+      return;
+    }
+    if (!turnstileToken) {
+      setError("Complete the verification check before signing in.");
+      setSubmitting(false);
+      return;
+    }
     const response = await fetch("/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: formData.get("email"),
         password: formData.get("password"),
+        turnstileToken,
       }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       setError(result.error || "Unable to sign in. Check your credentials and email confirmation.");
+      resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
       setSubmitting(false);
       return;
     }
     setUser(result.user);
     publishAuthChange(result.user);
     setSubmitting(false);
+    removeTurnstile(turnstileWidgetIdRef, setTurnstileToken);
     dialogRef.current?.close();
   }
 
@@ -91,6 +165,16 @@ export default function NavbarAuth() {
     setMessage("");
     const formData = new FormData(event.currentTarget);
     const password = formData.get("password");
+    if (!turnstileSiteKey) {
+      setError("Verification is not configured yet.");
+      setSubmitting(false);
+      return;
+    }
+    if (!turnstileToken) {
+      setError("Complete the verification check before creating an account.");
+      setSubmitting(false);
+      return;
+    }
     if (password !== formData.get("confirmPassword")) {
       setError("Passwords do not match.");
       setSubmitting(false);
@@ -99,14 +183,16 @@ export default function NavbarAuth() {
     const response = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: formData.get("email"), password }),
+      body: JSON.stringify({ email: formData.get("email"), password, turnstileToken }),
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       setError(result.error || "Unable to create the account.");
+      resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
       setSubmitting(false);
       return;
     }
+    resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
     setMode("login");
     setMessage("Account created. Check your email and confirm your address before signing in.");
     setSubmitting(false);
@@ -116,6 +202,7 @@ export default function NavbarAuth() {
     await fetch("/api/auth/logout", { method: "POST" });
     setMenuOpen(false);
     setUser(null);
+    removeTurnstile(turnstileWidgetIdRef, setTurnstileToken);
     publishAuthChange(null);
   }
 
@@ -279,15 +366,28 @@ export default function NavbarAuth() {
     <>
       <button
         type="button"
-        onClick={() => { setMode("login"); setError(""); setMessage(""); dialogRef.current?.showModal(); }}
+        onClick={() => {
+          setMode("login");
+          setError("");
+          setMessage("");
+          resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+          dialogRef.current?.showModal();
+        }}
         className="rounded-full border border-[#152321]/18 bg-white px-4 py-2 text-sm font-semibold text-[#152321] hover:-translate-y-0.5 hover:bg-[#f4eee5]"
       >
         Login
       </button>
+      {turnstileSiteKey ? (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onLoad={renderTurnstileWidget}
+        />
+      ) : null}
       <dialog
         ref={dialogRef}
         onClick={(event) => { if (event.target === dialogRef.current) dialogRef.current.close(); }}
-        className="m-auto w-[min(92vw,26rem)] rounded-3xl border border-black/10 bg-[#fffdfa] p-0 text-[#152321] shadow-[0_30px_90px_rgba(21,35,33,0.28)] backdrop:bg-[#07111f]/55 backdrop:backdrop-blur-sm"
+        className="m-auto max-h-[92dvh] w-[min(92vw,26rem)] overflow-y-auto rounded-3xl border border-black/10 bg-[#fffdfa] p-0 text-[#152321] shadow-[0_30px_90px_rgba(21,35,33,0.28)] backdrop:bg-[#07111f]/55 backdrop:backdrop-blur-sm"
       >
         <form onSubmit={mode === "login" ? handleLogin : handleRegister} className="p-7 sm:p-8">
           <div className="flex items-start justify-between gap-4">
@@ -307,14 +407,28 @@ export default function NavbarAuth() {
               <input id="register-confirm-password" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
             </>
           )}
+          <div className="mt-5">
+            {turnstileSiteKey ? (
+              <div ref={turnstileRef} />
+            ) : (
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                Add NEXT_PUBLIC_TURNSTILE_SITE_KEY to enable account access.
+              </p>
+            )}
+          </div>
           {message && <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}
           {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-          <button type="submit" disabled={submitting} className="mt-6 w-full rounded-2xl bg-[#152321] px-4 py-3 font-semibold text-white hover:bg-[#0f1a18] disabled:cursor-wait disabled:opacity-60">
+          <button type="submit" disabled={submitting || !turnstileSiteKey || !turnstileToken} className="mt-6 w-full rounded-2xl bg-[#152321] px-4 py-3 font-semibold text-white hover:bg-[#0f1a18] disabled:cursor-wait disabled:opacity-60">
             {submitting ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
           </button>
           <button
             type="button"
-            onClick={() => { setMode((value) => value === "login" ? "register" : "login"); setError(""); setMessage(""); }}
+            onClick={() => {
+              setMode((value) => value === "login" ? "register" : "login");
+              setError("");
+              setMessage("");
+              resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+            }}
             className="mt-3 w-full rounded-2xl px-4 py-2 text-sm font-semibold text-[#1b5e59] hover:bg-[#1b5e59]/7"
           >
             {mode === "login" ? "Need an account? Register" : "Already registered? Sign in"}
