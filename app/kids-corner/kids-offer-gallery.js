@@ -226,6 +226,17 @@ export default function KidsOfferGallery() {
                   (isSelected ? "border-[#1b5e59]" : "border-black/8")
                 }
               >
+                {design.hasPreviewImage && (
+                  <div className="mb-5 overflow-hidden rounded-[1.25rem] border border-black/8 bg-[#f7f2ea]">
+                    <img
+                      src={`/api/kids-corner/designs/${design.id}/image`}
+                      alt={`${design.title} watermarked preview`}
+                      className="aspect-[16/10] w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <h3 className="text-xl font-semibold">{design.title}</h3>

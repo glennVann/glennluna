@@ -541,19 +541,38 @@ app.MapPut("/api/work/design-offers/{id:int}/status", async (int id, KidDesignOf
 
 app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
     {
-        var designs = await db.KidDesignSubmissions.AsNoTracking()
+        var submissions = await db.KidDesignSubmissions.AsNoTracking()
             .Where(submission => submission.Status == "Published")
             .OrderByDescending(submission => submission.PublishedAtUtc)
-            .Select(submission => new PublicKidDesignResponse(
+            .ToListAsync();
+
+        var designs = submissions.Select(submission => new PublicKidDesignResponse(
                 submission.Id,
                 submission.Title,
                 submission.Description,
                 submission.IsForSale,
                 submission.AskingPrice,
-                submission.SaleCurrency))
-            .ToListAsync();
+                submission.SaleCurrency,
+                submission.DesignFile != null && IsWatermarkableImage(submission.DesignFileContentType)))
+            .ToList();
 
         return Results.Ok(designs);
+    });
+
+app.MapGet("/api/kids-corner/designs/{id:int}/image", async (int id, ApplicationDbContext db, HttpContext context) =>
+    {
+        var submission = await db.KidDesignSubmissions.AsNoTracking()
+            .SingleOrDefaultAsync(item => item.Id == id && item.Status == "Published");
+        if (submission?.DesignFile is not { Length: > 0 }) return Results.NotFound();
+        if (!IsWatermarkableImage(submission.DesignFileContentType)) return Results.NotFound();
+
+        context.Response.Headers.XContentTypeOptions = "nosniff";
+        var file = WatermarkImageIfSupported(
+            submission.DesignFile,
+            submission.DesignFileContentType,
+            submission.DesignFileName,
+            "Glenn Luna");
+        return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     });
 
 app.MapPost("/api/kids-corner/offers", async (KidDesignOfferRequest request, ApplicationDbContext db) =>
@@ -1405,7 +1424,8 @@ internal sealed record PublicKidDesignResponse(
     string Description,
     bool IsForSale,
     decimal? AskingPrice,
-    string SaleCurrency);
+    string SaleCurrency,
+    bool HasPreviewImage);
 
 internal sealed record QuoteRequestResponse(
     int Id,
