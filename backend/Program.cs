@@ -459,7 +459,12 @@ app.MapPut("/api/work/designs/{id:int}/status", async (int id, KidDesignStatusRe
         var status = request.Status?.Trim();
         if (!IsValidKidDesignStatus(status))
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose Draft, Submitted, Approved, or Published."] });
-        var saleErrors = ValidateKidDesignSaleSettings(request.IsForSale, request.AskingPrice, request.SaleCurrency, status);
+        var saleErrors = ValidateKidDesignSaleSettings(
+            request.IsForSale,
+            request.AskingPrice,
+            request.SaleCurrency,
+            status,
+            HasWatermarkableDesignFile(submission));
         if (saleErrors.Count > 0) return Results.ValidationProblem(saleErrors);
 
         submission.Status = status!;
@@ -543,6 +548,11 @@ app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
     {
         var submissions = await db.KidDesignSubmissions.AsNoTracking()
             .Where(submission => submission.Status == "Published")
+            .Where(submission =>
+                submission.DesignFile != null &&
+                (submission.DesignFileContentType == "image/jpeg" ||
+                 submission.DesignFileContentType == "image/png" ||
+                 submission.DesignFileContentType == "image/webp"))
             .OrderByDescending(submission => submission.PublishedAtUtc)
             .ToListAsync();
 
@@ -553,7 +563,7 @@ app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
                 submission.IsForSale,
                 submission.AskingPrice,
                 submission.SaleCurrency,
-                submission.DesignFile != null && IsWatermarkableImage(submission.DesignFileContentType)))
+                HasWatermarkableDesignFile(submission)))
             .ToList();
 
         return Results.Ok(designs);
@@ -799,6 +809,9 @@ static string NormalizeCurrency(string? currency)
     var value = currency?.Trim().ToUpperInvariant();
     return value is "USD" ? "USD" : "CAD";
 }
+
+static bool HasWatermarkableDesignFile(KidDesignSubmission submission) =>
+    submission.DesignFile is { Length: > 0 } && IsWatermarkableImage(submission.DesignFileContentType);
 
 static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? fileName)
 {
@@ -1151,9 +1164,12 @@ static Dictionary<string, string[]> ValidateKidDesignSaleSettings(
     bool isForSale,
     decimal? askingPrice,
     string? saleCurrency,
-    string? status)
+    string? status,
+    bool hasWatermarkableImage)
 {
     var errors = new Dictionary<string, string[]>();
+    if (status == "Published" && !hasWatermarkableImage)
+        errors["file"] = ["Upload a JPEG, PNG, or WebP image before publishing to the public gallery."];
     if (isForSale && status != "Published")
         errors["isForSale"] = ["Only published designs can be listed for sale."];
     if (isForSale && (!askingPrice.HasValue || askingPrice <= 0 || askingPrice > 10000))
