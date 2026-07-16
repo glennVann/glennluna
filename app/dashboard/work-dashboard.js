@@ -15,6 +15,36 @@ const ROLE_OPTIONS = [
 const TASK_STATUS_OPTIONS = ["Assigned", "In Progress", "Submitted", "Completed"];
 const QUOTE_STATUS_OPTIONS = ["New", "Reviewing", "Quoted", "Accepted", "Declined", "Closed"];
 const DESIGN_STATUS_OPTIONS = ["Draft", "Submitted", "Approved", "Published"];
+const DESIGN_KANBAN_COLUMNS = [
+  {
+    status: "Draft",
+    title: "Draft",
+    description: "Ideas still being shaped before review.",
+    accent: "bg-stone-400",
+    panel: "bg-[#f7f2ea]",
+  },
+  {
+    status: "Submitted",
+    title: "Submitted",
+    description: "Ready for an adult reviewer to check.",
+    accent: "bg-amber-500",
+    panel: "bg-amber-50",
+  },
+  {
+    status: "Approved",
+    title: "Approved",
+    description: "Reviewed, but not public yet.",
+    accent: "bg-sky-500",
+    panel: "bg-sky-50",
+  },
+  {
+    status: "Published",
+    title: "Published",
+    description: "Visible in the public Kids Corner gallery.",
+    accent: "bg-emerald-500",
+    panel: "bg-emerald-50",
+  },
+];
 const OFFER_STATUS_OPTIONS = ["New", "Reviewing", "Accepted", "Declined"];
 const DESIGN_FILE_ACCEPT =
   "image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.docx";
@@ -539,6 +569,65 @@ function KidDesignCard({
   );
 }
 
+function KidDesignKanbanCard({ design, canReview, savingId, onStatusChange }) {
+  return (
+    <article className="rounded-[1.25rem] border border-black/8 bg-white/86 p-4 shadow-[0_12px_28px_rgba(21,35,33,0.05)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h4 className="truncate text-base font-semibold">{design.title}</h4>
+          <p className="mt-1 truncate text-xs text-black/48">
+            {design.ownerName || "Private creator"}
+          </p>
+        </div>
+        <span
+          className={
+            "shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] " +
+            getDesignStatusTone(design.status)
+          }
+        >
+          {design.status}
+        </span>
+      </div>
+
+      <p className="mt-3 line-clamp-3 text-xs leading-5 text-black/58">
+        {design.description || "No description yet."}
+      </p>
+
+      <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold text-[#152321]">
+        <span className="rounded-full bg-[#f7f2ea] px-2.5 py-1">
+          {design.hasDesignFile ? "File attached" : "No file"}
+        </span>
+        {design.isForSale && (
+          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-800">
+            Offers open
+          </span>
+        )}
+      </div>
+
+      <div className="mt-4 text-[11px] leading-5 text-black/45">
+        <p>Updated {formatDateTime(design.updatedAtUtc)}</p>
+        {design.publishedAtUtc && <p>Published {formatDateTime(design.publishedAtUtc)}</p>}
+      </div>
+
+      {canReview && (
+        <label className="mt-4 block text-xs font-semibold uppercase tracking-wide text-black/45">
+          Move to
+          <select
+            value={design.status}
+            onChange={(event) => onStatusChange(design, event.target.value)}
+            disabled={savingId === design.id}
+            className="mt-2 w-full rounded-xl border border-black/10 bg-white p-2.5 text-sm font-normal normal-case tracking-normal text-[#152321] disabled:opacity-60"
+          >
+            {DESIGN_STATUS_OPTIONS.map((status) => (
+              <option key={status}>{status}</option>
+            ))}
+          </select>
+        </label>
+      )}
+    </article>
+  );
+}
+
 function OfferCard({ offer, savingOfferId, onStatusChange }) {
   return (
     <article className="rounded-[1.25rem] border border-black/8 bg-white p-5 shadow-[0_14px_36px_rgba(21,35,33,0.06)]">
@@ -833,6 +922,29 @@ export default function WorkDashboard() {
     }
   }
 
+  async function setDesignStatus(design, status) {
+    try {
+      setError("");
+      setSavingDesignStatusId(design.id);
+      await api("/api/work/designs/" + design.id + "/status", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status,
+          isForSale: status === "Published" && design.isForSale,
+          askingPrice: status === "Published" ? design.askingPrice : null,
+          saleCurrency: design.saleCurrency || "CAD",
+        }),
+      });
+      setMessage("Design moved to " + status + ".");
+      await load();
+    } catch (statusError) {
+      setError(statusError.message);
+    } finally {
+      setSavingDesignStatusId(null);
+    }
+  }
+
   async function setOfferStatus(id, status) {
     try {
       setError("");
@@ -918,6 +1030,10 @@ export default function WorkDashboard() {
   const designCounts = DESIGN_STATUS_OPTIONS.map((status) => ({
     status,
     count: designs.filter((design) => design.status === status).length,
+  }));
+  const designKanbanColumns = DESIGN_KANBAN_COLUMNS.map((column) => ({
+    ...column,
+    designs: designs.filter((design) => design.status === column.status),
   }));
 
   return (
@@ -1041,6 +1157,59 @@ export default function WorkDashboard() {
                 <div key={item.status} className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#152321]">
                   {item.status}: {item.count}
                 </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="text-2xl font-semibold">Studio Kanban</h3>
+                <p className="mt-2 text-sm leading-6 text-black/58">
+                  Track every kids design from first draft to public gallery.
+                </p>
+              </div>
+              <p className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#152321]">
+                {designs.length} total
+              </p>
+            </div>
+
+            <div className="mt-5 grid gap-4 xl:grid-cols-4">
+              {designKanbanColumns.map((column) => (
+                <section
+                  key={column.status}
+                  className={"min-h-72 rounded-[1.5rem] border border-black/8 p-4 " + column.panel}
+                >
+                  <div className="flex items-start justify-between gap-3 border-b border-black/8 pb-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className={"h-2.5 w-2.5 rounded-full " + column.accent} />
+                        <h4 className="text-lg font-semibold">{column.title}</h4>
+                      </div>
+                      <p className="mt-2 text-xs leading-5 text-black/52">{column.description}</p>
+                    </div>
+                    <span className="rounded-full bg-white px-3 py-1 text-sm font-semibold">
+                      {column.designs.length}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3">
+                    {column.designs.map((design) => (
+                      <KidDesignKanbanCard
+                        key={design.id}
+                        design={design}
+                        canReview={canReviewDesigns}
+                        savingId={savingDesignStatusId}
+                        onStatusChange={setDesignStatus}
+                      />
+                    ))}
+                    {column.designs.length === 0 && (
+                      <p className="rounded-2xl border border-dashed border-black/12 bg-white/58 px-4 py-8 text-center text-sm text-black/45">
+                        No {column.title.toLowerCase()} designs.
+                      </p>
+                    )}
+                  </div>
+                </section>
               ))}
             </div>
           </div>
