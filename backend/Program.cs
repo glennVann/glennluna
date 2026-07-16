@@ -21,6 +21,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 var adminEmail = builder.Configuration["ADMIN_EMAIL"]
     ?? builder.Configuration["AdminEmail"]
     ?? "glenncotamuraluna@gmail.com";
+var watermarkLogoPath = ResolveWatermarkLogoPath(builder.Environment.ContentRootPath);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
@@ -496,7 +497,8 @@ app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal pri
             submission.DesignFile,
             submission.DesignFileContentType,
             submission.DesignFileName,
-            "Glenn Luna");
+            "Kids Corner",
+            watermarkLogoPath);
         return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     }).RequireAuthorization();
 
@@ -612,7 +614,8 @@ app.MapGet("/api/kids-corner/designs/{id:int}/image", async (int id, Application
             submission.DesignFile,
             submission.DesignFileContentType,
             submission.DesignFileName,
-            "Glenn Luna");
+            "Kids Corner",
+            watermarkLogoPath);
         return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     });
 
@@ -861,7 +864,12 @@ static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? f
     };
 }
 
-static WatermarkedFile WatermarkImageIfSupported(byte[] bytes, string? contentType, string? fileName, string watermarkText)
+static WatermarkedFile WatermarkImageIfSupported(
+    byte[] bytes,
+    string? contentType,
+    string? fileName,
+    string watermarkText,
+    string? logoPath = null)
 {
     var safeFileName = Path.GetFileName(fileName ?? "submission");
     var safeContentType = string.IsNullOrWhiteSpace(contentType)
@@ -876,7 +884,8 @@ static WatermarkedFile WatermarkImageIfSupported(byte[] bytes, string? contentTy
     try
     {
         using var image = Image.Load<Rgba32>(bytes);
-        ApplyWatermark(image, watermarkText);
+        using var logo = LoadWatermarkLogo(logoPath, image.Width);
+        ApplyWatermark(image, watermarkText, logo);
 
         using var output = new MemoryStream();
         image.SaveAsPng(output);
@@ -903,7 +912,68 @@ static string BuildWatermarkedFileName(string fileName)
         : $"{name}-watermarked.png";
 }
 
-static void ApplyWatermark(Image<Rgba32> image, string watermarkText)
+static string? ResolveWatermarkLogoPath(string contentRootPath)
+{
+    var candidates = new[]
+    {
+        Path.Combine(contentRootPath, "..", "public", "glenn-luna-logo.png"),
+        Path.Combine(Directory.GetCurrentDirectory(), "public", "glenn-luna-logo.png")
+    };
+
+    return candidates
+        .Select(Path.GetFullPath)
+        .FirstOrDefault(File.Exists);
+}
+
+static Image<Rgba32>? LoadWatermarkLogo(string? logoPath, int imageWidth)
+{
+    if (string.IsNullOrWhiteSpace(logoPath) || !File.Exists(logoPath)) return null;
+
+    try
+    {
+        using var original = Image.Load<Rgba32>(logoPath);
+        var targetWidth = Math.Max(32, Math.Min(140, imageWidth / 7));
+        if (original.Width <= 0 || original.Height <= 0) return null;
+        var targetHeight = Math.Max(1, (int)Math.Round(original.Height * (targetWidth / (double)original.Width)));
+        var resized = new Image<Rgba32>(targetWidth, targetHeight);
+        var originalPixels = ExtractPixels(original);
+
+        resized.ProcessPixelRows(resizedAccessor =>
+        {
+            for (var y = 0; y < targetHeight; y++)
+            {
+                var sourceY = Math.Min(original.Height - 1, (int)Math.Floor(y * original.Height / (double)targetHeight));
+                var targetRow = resizedAccessor.GetRowSpan(y);
+                for (var x = 0; x < targetWidth; x++)
+                {
+                    var sourceX = Math.Min(original.Width - 1, (int)Math.Floor(x * original.Width / (double)targetWidth));
+                    targetRow[x] = originalPixels[sourceY * original.Width + sourceX];
+                }
+            }
+        });
+
+        return resized;
+    }
+    catch
+    {
+        return null;
+    }
+}
+
+static Rgba32[] ExtractPixels(Image<Rgba32> image)
+{
+    var pixels = new Rgba32[image.Width * image.Height];
+    image.ProcessPixelRows(accessor =>
+    {
+        for (var y = 0; y < accessor.Height; y++)
+        {
+            accessor.GetRowSpan(y).CopyTo(pixels.AsSpan(y * accessor.Width, accessor.Width));
+        }
+    });
+    return pixels;
+}
+
+static void ApplyWatermark(Image<Rgba32> image, string watermarkText, Image<Rgba32>? logo = null)
 {
     var text = string.IsNullOrWhiteSpace(watermarkText)
         ? "Glenn Luna"
@@ -911,8 +981,12 @@ static void ApplyWatermark(Image<Rgba32> image, string watermarkText)
     var scale = Math.Clamp(Math.Min(image.Width, image.Height) / 180, 2, 8);
     var textWidth = MeasureBlockText(text, scale);
     var textHeight = 7 * scale;
-    var stepX = textWidth + 44 * scale;
-    var stepY = textHeight + 36 * scale;
+    var logoPixels = logo is null ? null : ExtractPixels(logo);
+    var logoGap = logoPixels is null ? 0 : 10 * scale;
+    var fullMarkWidth = textWidth + logoGap + (logo?.Width ?? 0);
+    var fullMarkHeight = Math.Max(textHeight, logo?.Height ?? 0);
+    var stepX = fullMarkWidth + 44 * scale;
+    var stepY = fullMarkHeight + 36 * scale;
     var shadow = new Rgba32(10, 18, 17, 72);
     var light = new Rgba32(255, 255, 255, 82);
 
@@ -923,8 +997,14 @@ static void ApplyWatermark(Image<Rgba32> image, string watermarkText)
             var offset = Math.Abs(y / Math.Max(stepY, 1)) % 2 == 0 ? 0 : stepX / 2;
             for (var x = -offset; x < image.Width + stepX; x += stepX)
             {
-                DrawBlockText(accessor, text, x + scale, y + scale, scale, shadow);
-                DrawBlockText(accessor, text, x, y, scale, light);
+                var textY = y + Math.Max(0, (fullMarkHeight - textHeight) / 2);
+                DrawBlockText(accessor, text, x + scale, textY + scale, scale, shadow);
+                DrawBlockText(accessor, text, x, textY, scale, light);
+                if (logoPixels is not null && logo is not null)
+                {
+                    var logoY = y + Math.Max(0, (fullMarkHeight - logo.Height) / 2);
+                    DrawLogo(accessor, logoPixels, logo.Width, logo.Height, x + textWidth + logoGap, logoY, 74);
+                }
             }
         }
     });
@@ -979,6 +1059,35 @@ static void DrawBlock(PixelAccessor<Rgba32> accessor, int x, int y, int size, Rg
             var targetX = x + blockX;
             if (targetX < 0 || targetX >= row.Length) continue;
             row[targetX] = BlendPixel(row[targetX], color);
+        }
+    }
+}
+
+static void DrawLogo(
+    PixelAccessor<Rgba32> accessor,
+    Rgba32[] logoPixels,
+    int logoWidth,
+    int logoHeight,
+    int x,
+    int y,
+    byte opacity)
+{
+    for (var logoY = 0; logoY < logoHeight; logoY++)
+    {
+        var targetY = y + logoY;
+        if (targetY < 0 || targetY >= accessor.Height) continue;
+
+        var row = accessor.GetRowSpan(targetY);
+        for (var logoX = 0; logoX < logoWidth; logoX++)
+        {
+            var targetX = x + logoX;
+            if (targetX < 0 || targetX >= row.Length) continue;
+
+            var source = logoPixels[logoY * logoWidth + logoX];
+            if (source.A == 0) continue;
+
+            var alpha = (byte)Math.Clamp(source.A * (opacity / 255f), 0, 255);
+            row[targetX] = BlendPixel(row[targetX], new Rgba32(source.R, source.G, source.B, alpha));
         }
     }
 }
