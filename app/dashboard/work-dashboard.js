@@ -777,10 +777,15 @@ export default function WorkDashboard() {
       const canReviewKidDesigns =
         nextSession.user.isTeamAdmin ||
         nextSession.user.role === "ParentReviewer";
-      const quoteRequest = api("/api/work/quotes").catch((quoteLoadError) => {
-        console.warn("Quote requests could not be loaded:", quoteLoadError);
-        return [];
-      });
+      const canUseQuotes =
+        nextSession.user.isTeamAdmin ||
+        !["KidCreator", "ParentReviewer"].includes(nextSession.user.role);
+      const quoteRequest = canUseQuotes
+        ? api("/api/work/quotes").catch((quoteLoadError) => {
+            console.warn("Quote requests could not be loaded:", quoteLoadError);
+            return [];
+          })
+        : Promise.resolve([]);
       const [quoteList, taskList, designList, offerList, userList] = await Promise.all([
         quoteRequest,
         api("/api/work/tasks"),
@@ -1068,6 +1073,7 @@ export default function WorkDashboard() {
   const canCreateDesigns = session.user.role === "KidCreator";
   const canReviewDesigns = isAdmin || session.user.role === "ParentReviewer";
   const canUseDesigns = canCreateDesigns || canReviewDesigns;
+  const canUseQuotes = isAdmin || !["KidCreator", "ParentReviewer"].includes(session.user.role);
   const workers = users.filter(
     (user) =>
       user.role === "Content Writer" ||
@@ -1172,50 +1178,52 @@ export default function WorkDashboard() {
         </p>
       )}
 
-      <section className="mt-10 rounded-[2rem] border border-black/8 bg-[#f5f1ea] p-6 sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className="font-mono text-xs uppercase tracking-[.22em] text-[#1b5e59]">
-              Quote dashboard
-            </p>
-            <h2 className="mt-2 text-3xl font-semibold">
-              {isAdmin ? "Quote request inbox" : "My quote requests"}
-            </h2>
-            <p className="mt-3 text-sm leading-7 text-black/62">
-              {isAdmin
-                ? "Review saved quote requests from signed-in users and update their status as the conversation moves forward."
-                : "Create a quote request while signed in and track the request status here."}
-            </p>
+      {canUseQuotes && (
+        <section className="mt-10 rounded-[2rem] border border-black/8 bg-[#f5f1ea] p-6 sm:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <p className="font-mono text-xs uppercase tracking-[.22em] text-[#1b5e59]">
+                Quote dashboard
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold">
+                {isAdmin ? "Quote request inbox" : "My quote requests"}
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-black/62">
+                {isAdmin
+                  ? "Review saved quote requests from signed-in users and update their status as the conversation moves forward."
+                  : "Create a quote request while signed in and track the request status here."}
+              </p>
+            </div>
+
+            <Link
+              href="/quote"
+              className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(21,35,33,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
+            >
+              Create quote request
+            </Link>
           </div>
 
-          <Link
-            href="/quote"
-            className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(21,35,33,0.16)] transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
-          >
-            Create quote request
-          </Link>
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-2">
-          {quotes.length ? (
-            quotes.map((quote) => (
-              <QuoteCard
-                key={quote.id}
-                quote={quote}
-                isAdmin={isAdmin}
-                savingQuoteId={savingQuoteId}
-                onStatusChange={setQuoteStatus}
-              />
-            ))
-          ) : (
-            <p className="rounded-[1.5rem] border border-dashed border-black/12 bg-white/72 p-8 text-center text-sm text-black/45 lg:col-span-2">
-              {isAdmin
-                ? "No saved quote requests yet."
-                : "No quote requests yet. Start one when you are ready."}
-            </p>
-          )}
-        </div>
-      </section>
+          <div className="mt-8 grid gap-5 lg:grid-cols-2">
+            {quotes.length ? (
+              quotes.map((quote) => (
+                <QuoteCard
+                  key={quote.id}
+                  quote={quote}
+                  isAdmin={isAdmin}
+                  savingQuoteId={savingQuoteId}
+                  onStatusChange={setQuoteStatus}
+                />
+              ))
+            ) : (
+              <p className="rounded-[1.5rem] border border-dashed border-black/12 bg-white/72 p-8 text-center text-sm text-black/45 lg:col-span-2">
+                {isAdmin
+                  ? "No saved quote requests yet."
+                  : "No quote requests yet. Start one when you are ready."}
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       {canUseDesigns && (
         <section className="mt-10 rounded-[2rem] border border-black/8 bg-[#f5f1ea] p-6 sm:p-8">
