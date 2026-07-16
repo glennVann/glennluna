@@ -4,43 +4,22 @@ import KidsOfferGallery from "./kids-offer-gallery";
 export const metadata = {
   title: "Kids Corner",
   description:
-    "A playful Kids Corner for young designers to explore prompts, save private dashboard drafts, and submit creative work for review.",
+    "A playful Kids Corner for young designers to save private dashboard drafts, submit creative work for review, and share approved designs.",
   alternates: {
     canonical: "/kids-corner",
   },
   openGraph: {
     title: "Kids Corner | Glenn Luna",
     description:
-      "A playful creative page for kid-friendly design prompts, private dashboard drafts, and supervised submissions.",
+      "A playful creative page for private dashboard drafts, supervised submissions, and approved kid-friendly designs.",
     url: "https://glennluna.bindaddy.ca/kids-corner",
   },
   twitter: {
     title: "Kids Corner | Glenn Luna",
     description:
-      "Kid-friendly design prompts, creative challenges, and a supervised dashboard submission flow.",
+      "Kid-friendly creative work with private drafts, supervised reviews, and approved public designs.",
   },
 };
-
-const designPrompts = [
-  {
-    title: "Poster Idea",
-    description:
-      "Pick one favorite game, snack, or place and turn it into a bold one-page poster.",
-    accent: "bg-[#1b5e59]",
-  },
-  {
-    title: "Tiny Website",
-    description:
-      "Sketch a homepage with a name, three buttons, and one big picture area.",
-    accent: "bg-[#dd8c36]",
-  },
-  {
-    title: "Logo Remix",
-    description:
-      "Draw a simple symbol, choose two colors, and explain what the mark means.",
-    accent: "bg-[#375a9e]",
-  },
-];
 
 const galleryIdeas = [
   "Character card",
@@ -131,32 +110,6 @@ export default function KidsCornerPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section id="prompts" className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 lg:px-12">
-        <div className="max-w-3xl">
-          <p className="font-mono text-xs uppercase tracking-[0.24em] text-[#1b5e59]">
-            Creative prompts
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold sm:text-4xl">
-            Pick one small challenge and make it real.
-          </h2>
-        </div>
-
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {designPrompts.map((prompt) => (
-            <article
-              key={prompt.title}
-              className="rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_14px_36px_rgba(21,35,33,0.06)]"
-            >
-              <span className={`block h-2 w-14 rounded-full ${prompt.accent}`} />
-              <h3 className="mt-5 text-xl font-semibold">{prompt.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-black/62">
-                {prompt.description}
-              </p>
-            </article>
-          ))}
         </div>
       </section>
 
