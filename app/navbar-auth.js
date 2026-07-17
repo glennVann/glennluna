@@ -7,6 +7,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const AUTH_CHANGED_EVENT = "glennluna:auth-changed";
 const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
+const authModeTitle = {
+  login: "Welcome back",
+  register: "Create account",
+  forgot: "Reset password",
+  reset: "Enter reset code",
+};
 
 function publishAuthChange(user) {
   window.dispatchEvent(new CustomEvent(AUTH_CHANGED_EVENT, { detail: { user } }));
@@ -198,6 +204,99 @@ export default function NavbarAuth() {
     setSubmitting(false);
   }
 
+  async function handleForgotPassword(event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    setMessage("");
+    const formData = new FormData(event.currentTarget);
+    if (!turnstileSiteKey) {
+      setError("Verification is not configured yet.");
+      setSubmitting(false);
+      return;
+    }
+    if (!turnstileToken) {
+      setError("Complete the verification check before requesting a reset code.");
+      setSubmitting(false);
+      return;
+    }
+
+    const response = await fetch("/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.get("email"),
+        turnstileToken,
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(result.error || "Unable to send the reset code.");
+      resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+      setSubmitting(false);
+      return;
+    }
+
+    resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+    setMode("reset");
+    setMessage("If that email is registered, a password reset code has been sent.");
+    setSubmitting(false);
+  }
+
+  async function handleResetPassword(event) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    setMessage("");
+    const formData = new FormData(event.currentTarget);
+    const password = formData.get("password");
+    if (!turnstileSiteKey) {
+      setError("Verification is not configured yet.");
+      setSubmitting(false);
+      return;
+    }
+    if (!turnstileToken) {
+      setError("Complete the verification check before resetting your password.");
+      setSubmitting(false);
+      return;
+    }
+    if (password !== formData.get("confirmPassword")) {
+      setError("Passwords do not match.");
+      setSubmitting(false);
+      return;
+    }
+
+    const response = await fetch("/api/auth/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: formData.get("email"),
+        resetCode: formData.get("resetCode"),
+        newPassword: password,
+        turnstileToken,
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(result.error || "Unable to reset the password.");
+      resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+      setSubmitting(false);
+      return;
+    }
+
+    resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+    setMode("login");
+    setMessage("Password updated. You can sign in with the new password.");
+    setSubmitting(false);
+  }
+
+  function handleAuthSubmit(event) {
+    if (mode === "register") return handleRegister(event);
+    if (mode === "forgot") return handleForgotPassword(event);
+    if (mode === "reset") return handleResetPassword(event);
+    return handleLogin(event);
+  }
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setMenuOpen(false);
@@ -362,6 +461,18 @@ export default function NavbarAuth() {
     );
   }
 
+  const isLoginMode = mode === "login";
+  const isRegisterMode = mode === "register";
+  const isForgotMode = mode === "forgot";
+  const isResetMode = mode === "reset";
+  const submitLabel = isRegisterMode
+    ? "Create account"
+    : isForgotMode
+      ? "Send reset code"
+      : isResetMode
+        ? "Update password"
+        : "Sign in";
+
   return (
     <>
       <button
@@ -389,19 +500,39 @@ export default function NavbarAuth() {
         onClick={(event) => { if (event.target === dialogRef.current) dialogRef.current.close(); }}
         className="m-auto max-h-[92dvh] w-[min(92vw,26rem)] overflow-y-auto rounded-3xl border border-black/10 bg-[#fffdfa] p-0 text-[#152321] shadow-[0_30px_90px_rgba(21,35,33,0.28)] backdrop:bg-[#07111f]/55 backdrop:backdrop-blur-sm"
       >
-        <form onSubmit={mode === "login" ? handleLogin : handleRegister} className="p-7 sm:p-8">
+        <form onSubmit={handleAuthSubmit} className="p-7 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-black/40">Account</p>
-              <h2 className="mt-2 text-2xl font-semibold">{mode === "login" ? "Welcome back" : "Create account"}</h2>
+              <h2 className="mt-2 text-2xl font-semibold">{authModeTitle[mode] || authModeTitle.login}</h2>
+              {isForgotMode && (
+                <p className="mt-2 text-sm leading-6 text-black/58">
+                  Enter your email and we&apos;ll send a reset code if the account exists.
+                </p>
+              )}
+              {isResetMode && (
+                <p className="mt-2 text-sm leading-6 text-black/58">
+                  Paste the code from your email and choose a new password.
+                </p>
+              )}
             </div>
             <button type="button" onClick={() => dialogRef.current?.close()} className="rounded-full border border-black/10 px-3 py-1.5 text-sm hover:bg-black/5" aria-label="Close login form">Close</button>
           </div>
           <label className="mt-7 block text-sm font-semibold" htmlFor="login-email">Email</label>
           <input id="login-email" name="email" type="email" autoComplete="email" required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
-          <label className="mt-4 block text-sm font-semibold" htmlFor="login-password">Password</label>
-          <input id="login-password" name="password" type="password" minLength={8} autoComplete={mode === "login" ? "current-password" : "new-password"} required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
-          {mode === "register" && (
+          {isResetMode && (
+            <>
+              <label className="mt-4 block text-sm font-semibold" htmlFor="reset-code">Reset code</label>
+              <textarea id="reset-code" name="resetCode" rows={3} required className="mt-2 w-full resize-y rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
+            </>
+          )}
+          {!isForgotMode && (
+            <>
+              <label className="mt-4 block text-sm font-semibold" htmlFor="login-password">{isResetMode ? "New password" : "Password"}</label>
+              <input id="login-password" name="password" type="password" minLength={8} autoComplete={isLoginMode ? "current-password" : "new-password"} required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
+            </>
+          )}
+          {(isRegisterMode || isResetMode) && (
             <>
               <label className="mt-4 block text-sm font-semibold" htmlFor="register-confirm-password">Confirm password</label>
               <input id="register-confirm-password" name="confirmPassword" type="password" minLength={8} autoComplete="new-password" required className="mt-2 w-full rounded-2xl border border-black/12 bg-white px-4 py-3 outline-none focus:border-[#1b5e59] focus:ring-2 focus:ring-[#1b5e59]/15" />
@@ -419,8 +550,36 @@ export default function NavbarAuth() {
           {message && <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p>}
           {error && <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
           <button type="submit" disabled={submitting || !turnstileSiteKey || !turnstileToken} className="mt-6 w-full rounded-2xl bg-[#152321] px-4 py-3 font-semibold text-white hover:bg-[#0f1a18] disabled:cursor-wait disabled:opacity-60">
-            {submitting ? "Please wait…" : mode === "login" ? "Sign in" : "Create account"}
+            {submitting ? "Please wait…" : submitLabel}
           </button>
+          {isLoginMode && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode("forgot");
+                setError("");
+                setMessage("");
+                resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+              }}
+              className="mt-3 w-full rounded-2xl px-4 py-2 text-sm font-semibold text-[#1b5e59] hover:bg-[#1b5e59]/7"
+            >
+              Forgot password?
+            </button>
+          )}
+          {isForgotMode && (
+            <button
+              type="button"
+              onClick={() => {
+                setMode("reset");
+                setError("");
+                setMessage("");
+                resetTurnstile(turnstileWidgetIdRef, setTurnstileToken);
+              }}
+              className="mt-3 w-full rounded-2xl px-4 py-2 text-sm font-semibold text-[#1b5e59] hover:bg-[#1b5e59]/7"
+            >
+              Already have a reset code?
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
@@ -431,7 +590,7 @@ export default function NavbarAuth() {
             }}
             className="mt-3 w-full rounded-2xl px-4 py-2 text-sm font-semibold text-[#1b5e59] hover:bg-[#1b5e59]/7"
           >
-            {mode === "login" ? "Need an account? Register" : "Already registered? Sign in"}
+            {isLoginMode ? "Need an account? Register" : "Back to sign in"}
           </button>
         </form>
       </dialog>
