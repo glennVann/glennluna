@@ -36,6 +36,9 @@ public sealed class KidDesignSubmission
     [Column(TypeName = "longblob")]
     public byte[]? DesignFile { get; set; }
 
+    [MaxLength(500)]
+    public string? DesignFileObjectKey { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime? SubmittedAtUtc { get; set; }

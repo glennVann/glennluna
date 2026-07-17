@@ -17,4 +17,7 @@ public sealed class ApplicationUser : IdentityUser
 
     [MaxLength(50)]
     public string? ProfileImageContentType { get; set; }
+
+    [MaxLength(500)]
+    public string? ProfileImageObjectKey { get; set; }
 }

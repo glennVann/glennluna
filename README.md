@@ -51,6 +51,25 @@ defaults to `http://127.0.0.1:5000` for the combined VPS service.
 Set `PUBLIC_APP_URL=https://glennluna.bindaddy.ca` so confirmation emails use
 the public site instead of the backend's internal loopback address.
 
+## Object Storage With MinIO
+
+Uploaded profile photos, task files, and Kids Corner design images can be
+stored in a private MinIO bucket instead of MariaDB blobs. Existing database
+files still work as a fallback, so MinIO can be enabled after deployment.
+
+Configure these values in `.env` or systemd:
+
+```bash
+MINIO_ENDPOINT=http://127.0.0.1:9000
+MINIO_ACCESS_KEY=your-minio-access-key
+MINIO_SECRET_KEY=your-minio-secret-key
+MINIO_BUCKET=glennluna
+MINIO_USE_SSL=false
+```
+
+Keep the bucket private. The backend streams files and applies watermarks where
+needed, so the frontend does not need public MinIO URLs.
+
 ## Build
 
 ```bash

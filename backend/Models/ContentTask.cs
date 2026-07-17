@@ -16,6 +16,7 @@ public sealed class ContentTask
     [MaxLength(255)] public string? SubmissionFileName { get; set; }
     [MaxLength(100)] public string? SubmissionFileContentType { get; set; }
     public byte[]? SubmissionFile { get; set; }
+    [MaxLength(500)] public string? SubmissionFileObjectKey { get; set; }
     public DateTime? SubmittedAtUtc { get; set; }
     [MaxLength(450)] public string AssignedToUserId { get; set; } = string.Empty;
     public ApplicationUser? AssignedToUser { get; set; }

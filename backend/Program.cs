@@ -41,6 +41,7 @@ builder.Services
 
 builder.Services.AddTransient<IEmailSender<ApplicationUser>, SmtpIdentityEmailSender>();
 builder.Services.AddTransient<ITaskEmailSender, TaskEmailSender>();
+builder.Services.AddSingleton<IObjectStorage, MinioObjectStorage>();
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
@@ -71,16 +72,19 @@ app.MapGet("/api/auth/me", async (ClaimsPrincipal principal, UserManager<Applica
                 user.UserName,
                 user.DisplayName,
                 user.Role,
-                HasProfileImage = user.ProfileImage is { Length: > 0 },
+                HasProfileImage = HasStoredFile(user.ProfileImage, user.ProfileImageObjectKey),
                 IsTeamAdmin = IsTeamAdmin(user, adminEmail)
             });
     })
     .RequireAuthorization();
 
-app.MapGet("/api/auth/avatar", async (ClaimsPrincipal principal, UserManager<ApplicationUser> userManager) =>
+app.MapGet("/api/auth/avatar", async (ClaimsPrincipal principal, UserManager<ApplicationUser> userManager, IObjectStorage storage) =>
     {
         var user = await userManager.GetUserAsync(principal);
-        return user?.ProfileImage is not { Length: > 0 } image
+        if (user is null) return Results.Unauthorized();
+
+        var image = await LoadStoredFileAsync(storage, user.ProfileImageObjectKey, user.ProfileImage);
+        return image is not { Length: > 0 }
             ? Results.NotFound()
             : Results.File(image, user.ProfileImageContentType ?? "application/octet-stream");
     })
@@ -89,7 +93,8 @@ app.MapGet("/api/auth/avatar", async (ClaimsPrincipal principal, UserManager<App
 app.MapPut("/api/auth/profile", async (
     UpdateProfileRequest request,
     ClaimsPrincipal principal,
-    UserManager<ApplicationUser> userManager) =>
+    UserManager<ApplicationUser> userManager,
+    IObjectStorage storage) =>
     {
         var user = await userManager.GetUserAsync(principal);
         if (user is null)
@@ -110,8 +115,10 @@ app.MapPut("/api/auth/profile", async (
 
         if (request.RemoveProfileImage)
         {
+            await storage.DeleteAsync(user.ProfileImageObjectKey);
             user.ProfileImage = null;
             user.ProfileImageContentType = null;
+            user.ProfileImageObjectKey = null;
         }
         else if (!string.IsNullOrWhiteSpace(request.ProfileImageBase64))
         {
@@ -150,8 +157,18 @@ app.MapPut("/api/auth/profile", async (
                 });
             }
 
-            user.ProfileImage = image;
-            user.ProfileImageContentType = request.ProfileImageContentType.ToLowerInvariant();
+            var contentType = request.ProfileImageContentType.ToLowerInvariant();
+            var oldObjectKey = user.ProfileImageObjectKey;
+            var objectKey = await SaveStoredFileAsync(
+                storage,
+                $"profiles/{user.Id}",
+                image,
+                "profile-image",
+                contentType);
+            if (objectKey is not null) await storage.DeleteAsync(oldObjectKey);
+            user.ProfileImage = objectKey is null ? image : null;
+            user.ProfileImageObjectKey = objectKey;
+            user.ProfileImageContentType = contentType;
         }
 
         var result = await userManager.UpdateAsync(user);
@@ -169,7 +186,7 @@ app.MapPut("/api/auth/profile", async (
             user.UserName,
                 user.DisplayName,
                 user.Role,
-            HasProfileImage = user.ProfileImage is { Length: > 0 },
+            HasProfileImage = HasStoredFile(user.ProfileImage, user.ProfileImageObjectKey),
             IsTeamAdmin = IsTeamAdmin(user, adminEmail)
         });
     })
@@ -337,13 +354,13 @@ app.MapGet("/api/work/tasks", async (ClaimsPrincipal principal, UserManager<Appl
         return Results.Ok(await query.OrderBy(task => task.Status == "Completed").ThenBy(task => task.DueAtUtc)
             .Select(task => new { task.Id, task.Title, task.Instructions, task.Status, task.DueAtUtc,
                 task.SubmissionText, task.SubmissionNotes, task.SubmissionLink, task.SubmittedAtUtc,
-                HasSubmissionFile = task.SubmissionFile != null, task.SubmissionFileName,
+                HasSubmissionFile = task.SubmissionFile != null || task.SubmissionFileObjectKey != null, task.SubmissionFileName,
                 task.AssignedToUserId, Assignee = task.AssignedToUser!.DisplayName ?? task.AssignedToUser.Email })
             .ToListAsync());
     }).RequireAuthorization();
 
 app.MapPut("/api/work/tasks/{id:int}/submission", async (int id, SubmissionRequest request,
-    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db, IObjectStorage storage) =>
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -365,11 +382,22 @@ app.MapPut("/api/work/tasks/{id:int}/submission", async (int id, SubmissionReque
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = ["The file must be 5 MB or smaller."] });
             if (!IsAllowedSubmissionFile(file, request.FileContentType, request.FileName))
                 return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = ["Upload a JPEG, PNG, WebP, PDF, Word (.docx), or text file."] });
-            task.SubmissionFile = file;
-            task.SubmissionFileName = Path.GetFileName(request.FileName!);
-            task.SubmissionFileContentType = request.FileContentType!.ToLowerInvariant();
+            var contentType = request.FileContentType!.ToLowerInvariant();
+            var fileName = Path.GetFileName(request.FileName!);
+            var oldObjectKey = task.SubmissionFileObjectKey;
+            var objectKey = await SaveStoredFileAsync(
+                storage,
+                $"task-submissions/{task.Id}",
+                file,
+                fileName,
+                contentType);
+            if (objectKey is not null) await storage.DeleteAsync(oldObjectKey);
+            task.SubmissionFile = objectKey is null ? file : null;
+            task.SubmissionFileObjectKey = objectKey;
+            task.SubmissionFileName = fileName;
+            task.SubmissionFileContentType = contentType;
         }
-        if (string.IsNullOrWhiteSpace(request.Content) && string.IsNullOrWhiteSpace(request.Notes) && string.IsNullOrWhiteSpace(link) && task.SubmissionFile is null)
+        if (string.IsNullOrWhiteSpace(request.Content) && string.IsNullOrWhiteSpace(request.Notes) && string.IsNullOrWhiteSpace(link) && !HasStoredFile(task.SubmissionFile, task.SubmissionFileObjectKey))
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["submission"] = ["Add written content, notes, a link, or a file."] });
         task.SubmissionText = request.Content?.Trim() ?? ""; task.SubmissionNotes = request.Notes?.Trim() ?? "";
         task.SubmissionLink = link; task.SubmittedAtUtc = DateTime.UtcNow; task.Status = "Submitted";
@@ -377,17 +405,18 @@ app.MapPut("/api/work/tasks/{id:int}/submission", async (int id, SubmissionReque
     }).RequireAuthorization();
 
 app.MapGet("/api/work/tasks/{id:int}/submission-file", async (int id, ClaimsPrincipal principal,
-    UserManager<ApplicationUser> users, ApplicationDbContext db, HttpContext context) =>
+    UserManager<ApplicationUser> users, ApplicationDbContext db, HttpContext context, IObjectStorage storage) =>
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
         var task = await db.ContentTasks.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id);
         if (task is null) return Results.NotFound();
         if (!IsTeamAdmin(user, adminEmail) && task.AssignedToUserId != user.Id) return Results.Forbid();
-        if (task.SubmissionFile is null) return Results.NotFound();
+        var storedFile = await LoadStoredFileAsync(storage, task.SubmissionFileObjectKey, task.SubmissionFile);
+        if (storedFile is null) return Results.NotFound();
         context.Response.Headers.XContentTypeOptions = "nosniff";
         var file = WatermarkImageIfSupported(
-            task.SubmissionFile,
+            storedFile,
             task.SubmissionFileContentType,
             task.SubmissionFileName,
             "Glenn Luna");
@@ -465,7 +494,7 @@ app.MapGet("/api/work/designs", async (ClaimsPrincipal principal, UserManager<Ap
     }).RequireAuthorization();
 
 app.MapPost("/api/work/designs", async (KidDesignSubmissionRequest request,
-    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db, IObjectStorage storage) =>
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -476,8 +505,9 @@ app.MapPost("/api/work/designs", async (KidDesignSubmissionRequest request,
 
         var submission = new KidDesignSubmission { OwnerUserId = user.Id };
         ApplyKidDesignSubmission(submission, request);
-        if (!TryApplyDesignFile(submission, request, out var fileError))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileError] });
+        var fileResult = await TryApplyDesignFileAsync(submission, request, storage);
+        if (!fileResult.Success)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileResult.Error] });
 
         if (request.Submit)
         {
@@ -500,7 +530,7 @@ app.MapPost("/api/work/designs", async (KidDesignSubmissionRequest request,
     }).RequireAuthorization();
 
 app.MapPut("/api/work/designs/{id:int}", async (int id, KidDesignSubmissionRequest request,
-    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db, IObjectStorage storage) =>
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -517,12 +547,13 @@ app.MapPut("/api/work/designs/{id:int}", async (int id, KidDesignSubmissionReque
         var errors = ValidateKidDesignSubmission(
             request,
             requireContent: request.Submit,
-            hasExistingFile: submission.DesignFile is { Length: > 0 });
+            hasExistingFile: HasStoredFile(submission.DesignFile, submission.DesignFileObjectKey));
         if (errors.Count > 0) return Results.ValidationProblem(errors);
 
         ApplyKidDesignSubmission(submission, request);
-        if (!TryApplyDesignFile(submission, request, out var fileError))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileError] });
+        var fileResult = await TryApplyDesignFileAsync(submission, request, storage);
+        if (!fileResult.Success)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileResult.Error] });
 
         if (request.Submit)
         {
@@ -592,7 +623,7 @@ app.MapPut("/api/work/designs/{id:int}/status", async (int id, KidDesignStatusRe
     }).RequireAuthorization();
 
 app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal principal,
-    UserManager<ApplicationUser> users, ApplicationDbContext db, HttpContext context) =>
+    UserManager<ApplicationUser> users, ApplicationDbContext db, HttpContext context, IObjectStorage storage) =>
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -600,11 +631,12 @@ app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal pri
         var submission = await db.KidDesignSubmissions.AsNoTracking().SingleOrDefaultAsync(item => item.Id == id);
         if (submission is null) return Results.NotFound();
         if (!CanReviewKidDesigns(user, adminEmail) && submission.OwnerUserId != user.Id) return Results.Forbid();
-        if (submission.DesignFile is null) return Results.NotFound();
+        var storedFile = await LoadStoredFileAsync(storage, submission.DesignFileObjectKey, submission.DesignFile);
+        if (storedFile is null) return Results.NotFound();
 
         context.Response.Headers.XContentTypeOptions = "nosniff";
         var file = WatermarkImageIfSupported(
-            submission.DesignFile,
+            storedFile,
             submission.DesignFileContentType,
             submission.DesignFileName,
             "Kids Corner",
@@ -613,7 +645,7 @@ app.MapGet("/api/work/designs/{id:int}/file", async (int id, ClaimsPrincipal pri
     }).RequireAuthorization();
 
 app.MapPut("/api/work/designs/{id:int}/file", async (int id, KidDesignFileRequest request,
-    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
+    ClaimsPrincipal principal, UserManager<ApplicationUser> users, ApplicationDbContext db, IObjectStorage storage) =>
     {
         var user = await users.GetUserAsync(principal);
         if (user is null) return Results.Unauthorized();
@@ -625,8 +657,9 @@ app.MapPut("/api/work/designs/{id:int}/file", async (int id, KidDesignFileReques
             .SingleOrDefaultAsync(item => item.Id == id);
         if (submission is null) return Results.NotFound();
 
-        if (!TryApplyDesignPreviewFile(submission, request, out var fileError))
-            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileError] });
+        var fileResult = await TryApplyDesignPreviewFileAsync(submission, request, storage);
+        if (!fileResult.Success)
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["file"] = [fileResult.Error] });
 
         submission.UpdatedAtUtc = DateTime.UtcNow;
         submission.ReviewerUserId = user.Id;
@@ -711,7 +744,7 @@ app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
         var submissions = await db.KidDesignSubmissions.AsNoTracking()
             .Where(submission => submission.Status == "Published")
             .Where(submission =>
-                submission.DesignFile != null &&
+                (submission.DesignFile != null || submission.DesignFileObjectKey != null) &&
                 (submission.DesignFileContentType == "image/jpeg" ||
                  submission.DesignFileContentType == "image/png" ||
                  submission.DesignFileContentType == "image/webp"))
@@ -731,16 +764,18 @@ app.MapGet("/api/kids-corner/designs", async (ApplicationDbContext db) =>
         return Results.Ok(designs);
     });
 
-app.MapGet("/api/kids-corner/designs/{id:int}/image", async (int id, ApplicationDbContext db, HttpContext context) =>
+app.MapGet("/api/kids-corner/designs/{id:int}/image", async (int id, ApplicationDbContext db, HttpContext context, IObjectStorage storage) =>
     {
         var submission = await db.KidDesignSubmissions.AsNoTracking()
             .SingleOrDefaultAsync(item => item.Id == id && item.Status == "Published");
-        if (submission?.DesignFile is not { Length: > 0 }) return Results.NotFound();
+        if (submission is null) return Results.NotFound();
+        var storedFile = await LoadStoredFileAsync(storage, submission.DesignFileObjectKey, submission.DesignFile);
+        if (storedFile is not { Length: > 0 }) return Results.NotFound();
         if (!IsWatermarkableImage(submission.DesignFileContentType)) return Results.NotFound();
 
         context.Response.Headers.XContentTypeOptions = "nosniff";
         var file = WatermarkImageIfSupported(
-            submission.DesignFile,
+            storedFile,
             submission.DesignFileContentType,
             submission.DesignFileName,
             "Kids Corner",
@@ -801,7 +836,7 @@ app.MapGet("/api/team", async (ApplicationDbContext dbContext) =>
                 member.SortOrder,
                 member.IsActive,
                 member.UseAccountProfileImage
-                    ? member.ApplicationUser != null && member.ApplicationUser.ProfileImage != null
+                    ? member.ApplicationUser != null && (member.ApplicationUser.ProfileImage != null || member.ApplicationUser.ProfileImageObjectKey != null)
                     : member.Photo != null,
                 member.UseAccountProfileImage,
                 null,
@@ -810,14 +845,14 @@ app.MapGet("/api/team", async (ApplicationDbContext dbContext) =>
         return Results.Ok(members.Select(ToTeamMemberListingResponse));
     });
 
-app.MapGet("/api/team/{id:int}/photo", async (int id, ApplicationDbContext dbContext) =>
+app.MapGet("/api/team/{id:int}/photo", async (int id, ApplicationDbContext dbContext, IObjectStorage storage) =>
     {
         var member = await dbContext.TeamMembers
             .AsNoTracking()
             .Include(item => item.ApplicationUser)
             .SingleOrDefaultAsync(item => item.Id == id && item.IsActive);
         var photo = member?.UseAccountProfileImage == true
-            ? member.ApplicationUser?.ProfileImage
+            ? await LoadStoredFileAsync(storage, member.ApplicationUser?.ProfileImageObjectKey, member.ApplicationUser?.ProfileImage)
             : member?.Photo;
         var contentType = member?.UseAccountProfileImage == true
             ? member.ApplicationUser?.ProfileImageContentType
@@ -849,7 +884,7 @@ app.MapGet("/api/team/manage", async (
                 member.SortOrder,
                 member.IsActive,
                 member.UseAccountProfileImage
-                    ? member.ApplicationUser != null && member.ApplicationUser.ProfileImage != null
+                    ? member.ApplicationUser != null && (member.ApplicationUser.ProfileImage != null || member.ApplicationUser.ProfileImageObjectKey != null)
                     : member.Photo != null,
                 member.UseAccountProfileImage,
                 member.ApplicationUserId,
@@ -975,6 +1010,33 @@ static bool IsValidKidDesignOfferStatus(string? status) =>
 static bool IsValidQuoteStatus(string? status) =>
     status is "New" or "Reviewing" or "Quoted" or "Accepted" or "Declined" or "Closed";
 
+static bool HasStoredFile(byte[]? bytes, string? objectKey) =>
+    bytes is { Length: > 0 } || !string.IsNullOrWhiteSpace(objectKey);
+
+static async Task<byte[]?> LoadStoredFileAsync(
+    IObjectStorage storage,
+    string? objectKey,
+    byte[]? fallbackBytes,
+    CancellationToken cancellationToken = default)
+{
+    if (!string.IsNullOrWhiteSpace(objectKey))
+    {
+        var objectBytes = await storage.GetAsync(objectKey, cancellationToken);
+        if (objectBytes is { Length: > 0 }) return objectBytes;
+    }
+
+    return fallbackBytes is { Length: > 0 } ? fallbackBytes : null;
+}
+
+static async Task<string?> SaveStoredFileAsync(
+    IObjectStorage storage,
+    string prefix,
+    byte[] bytes,
+    string fileName,
+    string contentType,
+    CancellationToken cancellationToken = default) =>
+    await storage.SaveAsync(prefix, bytes, fileName, contentType, cancellationToken);
+
 static void AddNotification(
     ApplicationDbContext db,
     string? userId,
@@ -1069,7 +1131,8 @@ static string NormalizeCurrency(string? currency)
 }
 
 static bool HasWatermarkableDesignFile(KidDesignSubmission submission) =>
-    submission.DesignFile is { Length: > 0 } && IsWatermarkableImage(submission.DesignFileContentType);
+    HasStoredFile(submission.DesignFile, submission.DesignFileObjectKey) &&
+    IsWatermarkableImage(submission.DesignFileContentType);
 
 static bool IsAllowedSubmissionFile(byte[] bytes, string? contentType, string? fileName)
 {
@@ -1370,7 +1433,7 @@ static KidDesignSubmissionResponse ToKidDesignSubmissionResponse(KidDesignSubmis
         submission.IsForSale,
         submission.AskingPrice,
         submission.SaleCurrency,
-        submission.DesignFile is { Length: > 0 },
+        HasStoredFile(submission.DesignFile, submission.DesignFileObjectKey),
         submission.DesignFileName,
         submission.CreatedAtUtc,
         submission.UpdatedAtUtc,
@@ -1595,18 +1658,22 @@ static Dictionary<string, string[]> ValidateKidDesignOffer(KidDesignOfferRequest
     return errors;
 }
 
-static bool TryApplyDesignFile(KidDesignSubmission submission, KidDesignSubmissionRequest request, out string error)
+static async Task<(bool Success, string Error)> TryApplyDesignFileAsync(
+    KidDesignSubmission submission,
+    KidDesignSubmissionRequest request,
+    IObjectStorage storage)
 {
-    error = string.Empty;
     if (request.RemoveFile)
     {
+        await storage.DeleteAsync(submission.DesignFileObjectKey);
         submission.DesignFile = null;
         submission.DesignFileName = null;
         submission.DesignFileContentType = null;
-        return true;
+        submission.DesignFileObjectKey = null;
+        return (true, string.Empty);
     }
 
-    if (string.IsNullOrWhiteSpace(request.FileBase64)) return true;
+    if (string.IsNullOrWhiteSpace(request.FileBase64)) return (true, string.Empty);
 
     byte[] file;
     try
@@ -1615,43 +1682,54 @@ static bool TryApplyDesignFile(KidDesignSubmission submission, KidDesignSubmissi
     }
     catch (FormatException)
     {
-        error = "The uploaded design file is invalid.";
-        return false;
+        return (false, "The uploaded design file is invalid.");
     }
 
     if (file.Length > 5 * 1024 * 1024)
     {
-        error = "The file must be 5 MB or smaller.";
-        return false;
+        return (false, "The file must be 5 MB or smaller.");
     }
 
     if (!IsAllowedSubmissionFile(file, request.FileContentType, request.FileName))
     {
-        error = "Upload a JPEG, PNG, WebP, PDF, Word (.docx), or text file.";
-        return false;
+        return (false, "Upload a JPEG, PNG, WebP, PDF, Word (.docx), or text file.");
     }
 
-    submission.DesignFile = file;
-    submission.DesignFileName = Path.GetFileName(request.FileName!);
-    submission.DesignFileContentType = request.FileContentType!.ToLowerInvariant();
-    return true;
+    var fileName = Path.GetFileName(request.FileName!);
+    var contentType = request.FileContentType!.ToLowerInvariant();
+    var oldObjectKey = submission.DesignFileObjectKey;
+    var objectKey = await SaveStoredFileAsync(
+        storage,
+        $"kid-designs/{submission.OwnerUserId}",
+        file,
+        fileName,
+        contentType);
+    if (objectKey is not null) await storage.DeleteAsync(oldObjectKey);
+    submission.DesignFile = objectKey is null ? file : null;
+    submission.DesignFileObjectKey = objectKey;
+    submission.DesignFileName = fileName;
+    submission.DesignFileContentType = contentType;
+    return (true, string.Empty);
 }
 
-static bool TryApplyDesignPreviewFile(KidDesignSubmission submission, KidDesignFileRequest request, out string error)
+static async Task<(bool Success, string Error)> TryApplyDesignPreviewFileAsync(
+    KidDesignSubmission submission,
+    KidDesignFileRequest request,
+    IObjectStorage storage)
 {
-    error = string.Empty;
     if (request.RemoveFile)
     {
+        await storage.DeleteAsync(submission.DesignFileObjectKey);
         submission.DesignFile = null;
         submission.DesignFileName = null;
         submission.DesignFileContentType = null;
-        return true;
+        submission.DesignFileObjectKey = null;
+        return (true, string.Empty);
     }
 
     if (string.IsNullOrWhiteSpace(request.FileBase64))
     {
-        error = "Upload a JPEG, PNG, or WebP image for the public preview.";
-        return false;
+        return (false, "Upload a JPEG, PNG, or WebP image for the public preview.");
     }
 
     byte[] file;
@@ -1661,27 +1739,35 @@ static bool TryApplyDesignPreviewFile(KidDesignSubmission submission, KidDesignF
     }
     catch (FormatException)
     {
-        error = "The uploaded preview image is invalid.";
-        return false;
+        return (false, "The uploaded preview image is invalid.");
     }
 
     if (file.Length > 5 * 1024 * 1024)
     {
-        error = "The preview image must be 5 MB or smaller.";
-        return false;
+        return (false, "The preview image must be 5 MB or smaller.");
     }
 
     if (!IsAllowedSubmissionFile(file, request.FileContentType, request.FileName) ||
         !IsWatermarkableImage(request.FileContentType?.ToLowerInvariant()))
     {
-        error = "Upload a JPEG, PNG, or WebP image for the public preview.";
-        return false;
+        return (false, "Upload a JPEG, PNG, or WebP image for the public preview.");
     }
 
-    submission.DesignFile = file;
-    submission.DesignFileName = Path.GetFileName(request.FileName!);
-    submission.DesignFileContentType = request.FileContentType!.ToLowerInvariant();
-    return true;
+    var fileName = Path.GetFileName(request.FileName!);
+    var contentType = request.FileContentType!.ToLowerInvariant();
+    var oldObjectKey = submission.DesignFileObjectKey;
+    var objectKey = await SaveStoredFileAsync(
+        storage,
+        $"kid-design-previews/{submission.Id}",
+        file,
+        fileName,
+        contentType);
+    if (objectKey is not null) await storage.DeleteAsync(oldObjectKey);
+    submission.DesignFile = objectKey is null ? file : null;
+    submission.DesignFileObjectKey = objectKey;
+    submission.DesignFileName = fileName;
+    submission.DesignFileContentType = contentType;
+    return (true, string.Empty);
 }
 
 static TeamMemberResponse ToTeamMemberResponse(TeamMember member) =>
@@ -1695,7 +1781,7 @@ static TeamMemberResponse ToTeamMemberResponse(TeamMember member) =>
         member.SortOrder,
         member.IsActive,
         member.UseAccountProfileImage
-            ? member.ApplicationUser?.ProfileImage is { Length: > 0 }
+            ? HasStoredFile(member.ApplicationUser?.ProfileImage, member.ApplicationUser?.ProfileImageObjectKey)
             : member.Photo is { Length: > 0 },
         member.UseAccountProfileImage,
         member.ApplicationUserId,
