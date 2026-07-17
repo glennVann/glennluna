@@ -1,5 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  BadgeCheck,
+  FileImage,
+  ImageUp,
+  Palette,
+  PenTool,
+  Share2,
+  Type,
+} from "lucide-react";
 import DesignerActions from "./designer-actions";
 
 export const metadata = {
@@ -28,26 +37,39 @@ const quoteHref =
 const designServices = [
   {
     title: "Logo and brand refresh",
+    Icon: BadgeCheck,
     text: "Clean up an existing logo, tighten the colors, or create matching assets so the brand feels more consistent.",
   },
   {
     title: "Social media graphics",
+    Icon: Share2,
     text: "Post templates, launch graphics, profile banners, simple campaign visuals, and reusable layouts.",
   },
   {
     title: "Digital brand assets",
+    Icon: Palette,
     text: "Reusable graphics for profiles, banners, thumbnails, simple campaigns, and online brand consistency.",
   },
   {
     title: "Website graphics",
+    Icon: FileImage,
     text: "Hero images, service graphics, project visuals, Open Graph images, and polished page assets.",
   },
 ];
 
 const updateSteps = [
-  "Upload the current graphic, notes, or design link in the dashboard.",
-  "Explain what needs to change: text, colors, logo, size, file type, or layout.",
-  "Submit the updated request so the final asset can be reviewed and delivered.",
+  {
+    Icon: ImageUp,
+    text: "Upload the current graphic, notes, or design link in the dashboard.",
+  },
+  {
+    Icon: Type,
+    text: "Explain what needs to change: text, colors, logo, size, file type, or layout.",
+  },
+  {
+    Icon: PenTool,
+    text: "Submit the updated request so the final asset can be reviewed and delivered.",
+  },
 ];
 
 export default function DesignerPage() {
@@ -145,11 +167,14 @@ export default function DesignerPage() {
         </div>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-4">
-          {designServices.map((service) => (
+          {designServices.map(({ Icon, ...service }) => (
             <article
               key={service.title}
-              className="rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_14px_36px_rgba(21,35,33,0.05)]"
+              className="group rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_14px_36px_rgba(21,35,33,0.05)] transition hover:-translate-y-1 hover:border-[#dd8c36]/25"
             >
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f7eadb] text-[#b66c1e] transition group-hover:bg-[#dd8c36] group-hover:text-white">
+                <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+              </div>
               <h3 className="text-xl font-semibold">{service.title}</h3>
               <p className="mt-3 text-sm leading-7 text-black/62">
                 {service.text}
@@ -177,15 +202,15 @@ export default function DesignerPage() {
           </div>
 
           <ol className="grid gap-4">
-            {updateSteps.map((step, index) => (
+            {updateSteps.map(({ Icon, text }, index) => (
               <li
-                key={step}
+                key={text}
                 className="flex items-center gap-4 rounded-[1.5rem] border border-white/10 bg-white/8 p-5"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dd8c36] font-semibold text-white">
-                  {index + 1}
+                  <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
                 </span>
-                <span className="text-sm font-semibold text-white/84">{step}</span>
+                <span className="text-sm font-semibold text-white/84">{text}</span>
               </li>
             ))}
           </ol>

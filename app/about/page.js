@@ -1,18 +1,30 @@
 import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle2,
+  GraduationCap,
+  Home,
+  Lightbulb,
+  Network,
+  ShieldCheck,
+} from "lucide-react";
 
 const values = [
   {
     title: "Product Thinking",
+    Icon: Lightbulb,
     description:
       "I want the work to solve a real problem clearly, not just add features for the sake of it.",
   },
   {
     title: "Reliable Delivery",
+    Icon: ShieldCheck,
     description:
       "For me, success is not just getting features live. It also means the result is stable, maintainable, and practical to run.",
   },
   {
     title: "Technical Range",
+    Icon: Network,
     description:
       "I work across frontend development, backend logic, technical SEO, server setup, DNS, networking, and deployment workflows.",
   },
@@ -111,8 +123,9 @@ export default function AboutPage() {
             {workingStyle.map((point) => (
               <div
                 key={point}
-                className="rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
+                className="flex gap-3 rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
               >
+                <CheckCircle2 aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-[#1b5e59]" strokeWidth={1.8} />
                 <p className="text-sm leading-7 text-[#152321]">{point}</p>
               </div>
             ))}
@@ -125,9 +138,14 @@ export default function AboutPage() {
           <p className="font-mono text-xs uppercase tracking-[0.28em] text-black/45">
             Education
           </p>
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#152321]">
-            {education.school}
-          </h2>
+          <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#e9f1ee] text-[#1b5e59] ring-1 ring-[#1b5e59]/10">
+              <GraduationCap aria-hidden="true" className="h-7 w-7" strokeWidth={1.8} />
+            </div>
+            <h2 className="text-3xl font-semibold tracking-[-0.04em] text-[#152321]">
+              {education.school}
+            </h2>
+          </div>
           <p className="mt-3 text-lg font-medium text-[#1b5e59]">
             {education.credential}
           </p>
@@ -143,11 +161,14 @@ export default function AboutPage() {
             What I Value
           </p>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {values.map((value) => (
+            {values.map(({ Icon, ...value }) => (
               <article
                 key={value.title}
-                className="rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6"
+                className="group rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6 transition hover:-translate-y-1 hover:border-[#1b5e59]/20 hover:shadow-[0_18px_40px_rgba(21,35,33,0.09)]"
               >
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e9f1ee] text-[#1b5e59] ring-1 ring-[#1b5e59]/10 transition group-hover:bg-[#1b5e59] group-hover:text-white">
+                  <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+                </div>
                 <h2 className="text-xl font-semibold text-[#152321]">
                   {value.title}
                 </h2>
@@ -164,11 +185,13 @@ export default function AboutPage() {
               className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-5 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5"
             >
               View Projects
+              <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" strokeWidth={1.8} />
             </Link>
             <Link
               href="/"
               className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
             >
+              <Home aria-hidden="true" className="mr-2 h-4 w-4" strokeWidth={1.8} />
               Back to Home
             </Link>
           </div>

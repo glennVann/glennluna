@@ -1,3 +1,9 @@
+import {
+  Paintbrush,
+  Send,
+  Sparkles,
+  UserCheck,
+} from "lucide-react";
 import KidsCornerActions from "./kids-corner-actions";
 import KidsOfferGallery from "./kids-offer-gallery";
 
@@ -31,9 +37,18 @@ const galleryIdeas = [
 ];
 
 const dashboardSteps = [
-  "Sign in with a confirmed account and ask an admin to assign the KidCreator role.",
-  "Open the dashboard and save a design as a private draft.",
-  "Submit the design so a ParentReviewer or admin can approve it before anything is published.",
+  {
+    Icon: UserCheck,
+    text: "Sign in with a confirmed account and ask an admin to assign the KidCreator role.",
+  },
+  {
+    Icon: Paintbrush,
+    text: "Open the dashboard and save a design as a private draft.",
+  },
+  {
+    Icon: Send,
+    text: "Submit the design so a ParentReviewer or admin can approve it before anything is published.",
+  },
 ];
 
 export default function KidsCornerPage() {
@@ -135,8 +150,9 @@ export default function KidsCornerPage() {
             {galleryIdeas.map((idea) => (
               <div
                 key={idea}
-                className="rounded-[1.35rem] border border-white/10 bg-white/8 p-5"
+                className="flex items-center gap-3 rounded-[1.35rem] border border-white/10 bg-white/8 p-5"
               >
+                <Sparkles aria-hidden="true" className="h-5 w-5 shrink-0 text-[#f5d36f]" strokeWidth={1.8} />
                 <p className="font-semibold">{idea}</p>
               </div>
             ))}
@@ -161,15 +177,15 @@ export default function KidsCornerPage() {
         </div>
 
         <ol className="grid gap-4">
-          {dashboardSteps.map((step, index) => (
+          {dashboardSteps.map(({ Icon, text }, index) => (
             <li
-              key={step}
+              key={text}
               className="flex items-center gap-4 rounded-[1.5rem] border border-black/8 bg-white p-5 shadow-[0_14px_36px_rgba(21,35,33,0.05)]"
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#dd8c36] font-semibold text-white">
-                {index + 1}
+                <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
               </span>
-              <span className="text-sm font-semibold text-[#152321]">{step}</span>
+              <span className="text-sm font-semibold text-[#152321]">{text}</span>
             </li>
           ))}
         </ol>

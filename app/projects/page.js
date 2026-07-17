@@ -1,4 +1,12 @@
 import Link from "next/link";
+import {
+  ArrowLeft,
+  ArrowRight,
+  BadgeCheck,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 import { projects } from "./project-data";
 
 export const metadata = {
@@ -46,6 +54,7 @@ export default function ProjectsPage() {
             href="/"
             className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-5 py-3 text-sm font-semibold text-[#152321] shadow-[0_12px_28px_rgba(21,35,33,0.08)] transition hover:-translate-y-0.5"
           >
+            <ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" strokeWidth={1.8} />
             Back to Home
           </Link>
         </header>
@@ -63,7 +72,8 @@ export default function ProjectsPage() {
                   <p className="font-mono text-xs uppercase tracking-[0.28em] text-[#1b5e59]">
                     {project.category}
                   </p>
-                  <div className="mt-4 inline-flex rounded-full border border-[#1b5e59]/15 bg-[#1b5e59]/8 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.24em] text-[#1b5e59]">
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#1b5e59]/15 bg-[#1b5e59]/8 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.24em] text-[#1b5e59]">
+                    <BadgeCheck aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
                     {project.status}
                   </div>
                   <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#152321] sm:text-4xl">
@@ -79,8 +89,10 @@ export default function ProjectsPage() {
                     className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
                   >
                     View Project Details
+                    <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" strokeWidth={1.8} />
                   </Link>
-                  <div className="inline-flex items-center justify-center rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321]">
+                  <div className="inline-flex items-center justify-center gap-2 rounded-full border border-[#152321]/12 bg-[#152321]/6 px-5 py-3 text-sm font-semibold text-[#152321]">
+                    <BriefcaseBusiness aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
                     Portfolio Project
                   </div>
                 </div>
@@ -90,8 +102,9 @@ export default function ProjectsPage() {
                 {project.highlights.map((highlight) => (
                   <div
                     key={highlight}
-                    className="rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
+                    className="flex gap-3 rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
                   >
+                    <CheckCircle2 aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-[#1b5e59]" strokeWidth={1.8} />
                     <p className="text-sm leading-7 text-[#152321]">
                       {highlight}
                     </p>
@@ -108,9 +121,10 @@ export default function ProjectsPage() {
                     {project.features.map((feature) => (
                       <div
                         key={feature}
-                        className="rounded-2xl border border-black/8 bg-white px-4 py-4 text-sm leading-7 text-[#152321]"
+                        className="flex gap-3 rounded-2xl border border-black/8 bg-white px-4 py-4 text-sm leading-7 text-[#152321]"
                       >
-                        {feature}
+                        <Sparkles aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-[#dd8c36]" strokeWidth={1.8} />
+                        <span>{feature}</span>
                       </div>
                     ))}
                   </div>

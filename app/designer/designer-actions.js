@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function DesignerActions({ quoteHref }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [canUpdateGraphics, setCanUpdateGraphics] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -15,12 +15,14 @@ export default function DesignerActions({ quoteHref }) {
       )
       .then((result) => {
         if (active) {
-          setIsAuthenticated(Boolean(result.authenticated));
+          setCanUpdateGraphics(
+            Boolean(result.authenticated && result.user?.role === "Graphic Designer"),
+          );
         }
       })
       .catch(() => {
         if (active) {
-          setIsAuthenticated(false);
+          setCanUpdateGraphics(false);
         }
       });
 
@@ -37,7 +39,7 @@ export default function DesignerActions({ quoteHref }) {
       >
         Request Design Quote
       </Link>
-      {isAuthenticated && (
+      {canUpdateGraphics && (
         <Link
           href="/dashboard"
           className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-6 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5 hover:bg-[#f7f2ea]"

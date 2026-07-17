@@ -1,3 +1,10 @@
+import {
+  CalendarClock,
+  FileImage,
+  Layers3,
+  ListChecks,
+  ServerCog,
+} from "lucide-react";
 import QuoteForm from "./quote-form";
 
 export const metadata = {
@@ -29,6 +36,39 @@ function readServices(value) {
   if (typeof value === "string") return value.split(",");
   return [];
 }
+
+const quoteTips = [
+  {
+    title: "Project Scope",
+    Icon: Layers3,
+    text:
+      "Website redesign, dashboard, booking system, POS workflow, graphic design, internal tool, or full custom platform.",
+  },
+  {
+    title: "Design Files",
+    Icon: FileImage,
+    text:
+      "For graphics work, include the current file, brand colors, target size, platform, and where the design will be used.",
+  },
+  {
+    title: "Timeline & Budget",
+    Icon: CalendarClock,
+    text:
+      "A realistic launch target and budget range helps shape the best technical approach.",
+  },
+  {
+    title: "Core Features",
+    Icon: ListChecks,
+    text:
+      "Share the most important workflows, pages, or integrations you need first.",
+  },
+  {
+    title: "Infrastructure Needs",
+    Icon: ServerCog,
+    text:
+      "Include server setup, networking, file server requirements, DNS, deployment, and storage workflow needs if they are part of the project.",
+  },
+];
 
 export default async function QuotePage({ searchParams }) {
   const params = await searchParams;
@@ -65,42 +105,22 @@ export default async function QuotePage({ searchParams }) {
               What To Include
             </p>
             <div className="mt-6 space-y-5">
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5">
-                <h2 className="text-lg font-semibold">Project Scope</h2>
-                <p className="mt-2 text-sm leading-7 text-white/74">
-                  Website redesign, dashboard, booking system, POS workflow,
-                  graphic design, internal tool, or full custom platform.
-                </p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5">
-                <h2 className="text-lg font-semibold">Design Files</h2>
-                <p className="mt-2 text-sm leading-7 text-white/74">
-                  For graphics work, include the current file, brand colors,
-                  target size, platform, and where the design will be used.
-                </p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5">
-                <h2 className="text-lg font-semibold">Timeline & Budget</h2>
-                <p className="mt-2 text-sm leading-7 text-white/74">
-                  A realistic launch target and budget range helps shape the
-                  best technical approach.
-                </p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5">
-                <h2 className="text-lg font-semibold">Core Features</h2>
-                <p className="mt-2 text-sm leading-7 text-white/74">
-                  Share the most important workflows, pages, or integrations you
-                  need first.
-                </p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5">
-                <h2 className="text-lg font-semibold">Infrastructure Needs</h2>
-                <p className="mt-2 text-sm leading-7 text-white/74">
-                  Include server setup, networking, file server requirements,
-                  DNS, deployment, and storage workflow needs if they are part
-                  of the project.
-                </p>
-              </div>
+              {quoteTips.map(({ Icon, ...tip }) => (
+                <div
+                  key={tip.title}
+                  className="rounded-[1.5rem] border border-white/10 bg-white/6 p-5"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white/10 text-[#f5d36f] ring-1 ring-white/10">
+                      <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                    </span>
+                    <h2 className="text-lg font-semibold">{tip.title}</h2>
+                  </div>
+                  <p className="mt-3 text-sm leading-7 text-white/74">
+                    {tip.text}
+                  </p>
+                </div>
+              ))}
             </div>
           </aside>
 

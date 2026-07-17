@@ -1,4 +1,14 @@
 import Link from "next/link";
+import {
+  ArrowLeft,
+  BadgeDollarSign,
+  Eye,
+  MessageCircle,
+  ShieldCheck,
+  TriangleAlert,
+  UserCog,
+  UserRoundCheck,
+} from "lucide-react";
 import { AuthenticatedDashboardButton } from "../kids-corner-actions";
 
 export const metadata = {
@@ -24,36 +34,43 @@ export const metadata = {
 const policySections = [
   {
     title: "The short version",
+    Icon: ShieldCheck,
     body:
       "Kids Corner is a supervised creative space. Kids can make and submit designs, but adults review what gets published, what can be listed for sale, and what happens when a buyer makes an offer.",
   },
   {
     title: "Who can see the work",
+    Icon: Eye,
     body:
       "Drafts and submitted designs stay private inside the dashboard. A design only appears publicly after a ParentReviewer or admin approves and publishes it. If a design is not published, it is not meant to be shown to visitors or buyers.",
   },
   {
     title: "Offers and messages",
+    Icon: MessageCircle,
     body:
       "Buyers can send an offer for a published design that has been marked for sale. That message goes to the reviewer/admin queue. Buyers do not get a direct chat with the kid creator through this site.",
   },
   {
     title: "Money and delivery",
+    Icon: BadgeDollarSign,
     body:
       "An offer is not an automatic sale. A parent reviewer or admin must review it first. Payment, delivery, refunds, and any final agreement are handled by the adult responsible for the listing.",
   },
   {
     title: "Kid privacy",
+    Icon: UserRoundCheck,
     body:
       "Kids should not post personal contact details, school names, addresses, phone numbers, or private family information in a design description or file. If something looks too personal, it can be edited, rejected, or removed.",
   },
   {
     title: "What may be removed",
+    Icon: TriangleAlert,
     body:
       "Designs or offers may be removed if they are unsafe, too personal, copied from someone else without permission, hateful, sexual, threatening, spammy, or just not a good fit for a child-friendly space.",
   },
   {
     title: "Parent and admin control",
+    Icon: UserCog,
     body:
       "Parent reviewers and admins can approve, publish, unpublish, list work for offers, change offer status, and decline buyer requests. Their job is to keep the creative side fun while keeping the business side careful.",
   },
@@ -76,12 +93,17 @@ export default function KidsCornerPolicyPage() {
         </p>
 
         <div className="mt-10 grid gap-5">
-          {policySections.map((section) => (
+          {policySections.map(({ Icon, ...section }) => (
             <article
               key={section.title}
               className="rounded-[1.5rem] border border-black/8 bg-white p-6 shadow-[0_14px_36px_rgba(21,35,33,0.05)]"
             >
-              <h2 className="text-2xl font-semibold">{section.title}</h2>
+              <div className="flex items-center gap-4">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#e9f1ee] text-[#1b5e59] ring-1 ring-[#1b5e59]/10">
+                  <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                </span>
+                <h2 className="text-2xl font-semibold">{section.title}</h2>
+              </div>
               <p className="mt-3 text-sm leading-7 text-black/64">
                 {section.body}
               </p>
@@ -102,6 +124,7 @@ export default function KidsCornerPolicyPage() {
               href="/kids-corner"
               className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-[#152321]"
             >
+              <ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" strokeWidth={1.8} />
               Back to Kids Corner
             </Link>
             <AuthenticatedDashboardButton className="inline-flex items-center justify-center rounded-full border border-white/16 px-5 py-3 text-sm font-semibold text-white">

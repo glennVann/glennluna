@@ -1,8 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  ArrowRight,
+  BriefcaseBusiness,
+  Code2,
+  GitBranch,
   FolderCog,
   Globe2,
+  Mail,
   MonitorSmartphone,
   Network,
   Rocket,
@@ -164,18 +169,22 @@ const featuredProjects = [
 const stackGroups = [
   {
     label: "Frontend",
+    Icon: MonitorSmartphone,
     items: ["Next.js 16", "React", "JavaScript", "Tailwind CSS"],
   },
   {
     label: "Backend",
+    Icon: Code2,
     items: ["Node.js", "API Design", "Authentication", "Data Modeling"],
   },
   {
     label: "Workflow",
+    Icon: GitBranch,
     items: ["Git", "Code Review", "Testing", "Maintenance"],
   },
   {
     label: "Infrastructure",
+    Icon: Network,
     items: [
       "Server Setup",
       "L2/L3 Networking",
@@ -480,6 +489,7 @@ export default function Home() {
               className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-5 py-3 text-sm font-semibold text-[#152321] shadow-[0_12px_28px_rgba(21,35,33,0.08)] transition hover:-translate-y-0.5"
             >
               Open Projects Page
+              <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" strokeWidth={1.8} />
             </Link>
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
@@ -489,6 +499,7 @@ export default function Home() {
                 className="rounded-[2rem] border border-black/8 bg-[#152321] p-7 text-white shadow-[0_20px_50px_rgba(21,35,33,0.16)]"
               >
                 <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-white/45">
+                  <BriefcaseBusiness aria-hidden="true" className="mr-2 inline h-4 w-4" strokeWidth={1.8} />
                   Selected Project
                 </p>
                 <h4 className="mt-4 text-2xl font-semibold">{project.title}</h4>
@@ -510,6 +521,7 @@ export default function Home() {
                   className="mt-6 inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5"
                 >
                   View details
+                  <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" strokeWidth={1.8} />
                 </Link>
               </article>
             ))}
@@ -525,14 +537,19 @@ export default function Home() {
             Toolkit
           </p>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {stackGroups.map((group) => (
+            {stackGroups.map(({ Icon, ...group }) => (
               <div
                 key={group.label}
                 className="rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6"
               >
-                <h4 className="text-lg font-semibold text-[#152321]">
-                  {group.label}
-                </h4>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#e9f1ee] text-[#1b5e59]">
+                    <Icon aria-hidden="true" className="h-5 w-5" strokeWidth={1.8} />
+                  </span>
+                  <h4 className="text-lg font-semibold text-[#152321]">
+                    {group.label}
+                  </h4>
+                </div>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {group.items.map((item) => (
                     <span
@@ -570,6 +587,7 @@ export default function Home() {
               className="inline-flex items-center justify-center rounded-full bg-[#152321] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#0f1a18]"
             >
               Request A Quote
+              <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" strokeWidth={1.8} />
             </Link>
           </div>
         </div>
@@ -599,6 +617,7 @@ export default function Home() {
                 href="mailto:glenncotamuraluna@gmail.com"
                 className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#152321] transition hover:-translate-y-0.5"
               >
+                <Mail aria-hidden="true" className="mr-2 h-4 w-4" strokeWidth={1.8} />
                 glenncotamuraluna@gmail.com
               </a>
               <Link
@@ -606,6 +625,7 @@ export default function Home() {
                 className="inline-flex items-center justify-center rounded-full border border-white/14 bg-white/8 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/12"
               >
                 Project Quote
+                <ArrowRight aria-hidden="true" className="ml-2 h-4 w-4" strokeWidth={1.8} />
               </Link>
               <a
                 href="https://www.linkedin.com/in/glenn-luna-62b1ba285/"

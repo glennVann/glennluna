@@ -1,6 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  ArrowLeft,
+  BadgeCheck,
+  BriefcaseBusiness,
+  CheckCircle2,
+  Cpu,
+  Sparkles,
+} from "lucide-react";
 import { getProjectBySlug, projects } from "../project-data";
 
 export function generateStaticParams() {
@@ -73,7 +81,8 @@ export default async function ProjectDetailPage({ params }) {
             <p className="font-mono text-xs uppercase tracking-[0.3em] text-black/45">
               Project Detail
             </p>
-            <div className="mt-4 inline-flex rounded-full border border-[#1b5e59]/15 bg-[#1b5e59]/8 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.24em] text-[#1b5e59]">
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#1b5e59]/15 bg-[#1b5e59]/8 px-4 py-2 font-mono text-[11px] uppercase tracking-[0.24em] text-[#1b5e59]">
+              <BadgeCheck aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
               {project.status}
             </div>
             <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#152321] sm:text-5xl lg:text-6xl">
@@ -88,9 +97,11 @@ export default async function ProjectDetailPage({ params }) {
               href="/projects"
               className="inline-flex items-center justify-center rounded-full border border-[#152321]/15 bg-white px-5 py-3 text-sm font-semibold text-[#152321] shadow-[0_12px_28px_rgba(21,35,33,0.08)] transition hover:-translate-y-0.5"
             >
+              <ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" strokeWidth={1.8} />
               Back to Projects
             </Link>
-            <div className="inline-flex items-center justify-center rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white">
+            <div className="inline-flex items-center justify-center gap-2 rounded-full bg-[#152321] px-5 py-3 text-sm font-semibold text-white">
+              <BriefcaseBusiness aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />
               Portfolio Project
             </div>
           </div>
@@ -113,8 +124,9 @@ export default async function ProjectDetailPage({ params }) {
             {project.highlights.map((highlight) => (
               <div
                 key={highlight}
-                className="rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
+                className="flex gap-3 rounded-[1.5rem] border border-black/8 bg-[#fcfaf6] p-5"
               >
+                <CheckCircle2 aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-[#1b5e59]" strokeWidth={1.8} />
                 <p className="text-sm leading-7 text-[#152321]">{highlight}</p>
               </div>
             ))}
@@ -129,8 +141,9 @@ export default async function ProjectDetailPage({ params }) {
             {project.technologies.map((item) => (
               <span
                 key={item}
-                className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-medium text-white/85"
+                className="inline-flex items-center gap-2 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-medium text-white/85"
               >
+                <Cpu aria-hidden="true" className="h-4 w-4 text-[#f5d36f]" strokeWidth={1.8} />
                 {item}
               </span>
             ))}
@@ -147,9 +160,10 @@ export default async function ProjectDetailPage({ params }) {
             {project.features.map((feature) => (
               <div
                 key={feature}
-                className="rounded-2xl border border-black/8 bg-[#fffdf8] px-5 py-5 text-sm leading-7 text-[#152321]"
+                className="flex gap-3 rounded-2xl border border-black/8 bg-[#fffdf8] px-5 py-5 text-sm leading-7 text-[#152321]"
               >
-                {feature}
+                <Sparkles aria-hidden="true" className="mt-1 h-4 w-4 shrink-0 text-[#dd8c36]" strokeWidth={1.8} />
+                <span>{feature}</span>
               </div>
             ))}
           </div>
