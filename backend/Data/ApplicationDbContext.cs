@@ -12,6 +12,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<QuoteRequest> QuoteRequests => Set<QuoteRequest>();
     public DbSet<KidDesignSubmission> KidDesignSubmissions => Set<KidDesignSubmission>();
     public DbSet<KidDesignOffer> KidDesignOffers => Set<KidDesignOffer>();
+    public DbSet<UserNotification> UserNotifications => Set<UserNotification>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -67,6 +68,15 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
         builder.Entity<KidDesignOffer>()
             .HasIndex(offer => offer.Status);
+
+        builder.Entity<UserNotification>()
+            .HasOne(notification => notification.User)
+            .WithMany()
+            .HasForeignKey(notification => notification.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UserNotification>()
+            .HasIndex(notification => new { notification.UserId, notification.IsRead, notification.CreatedAtUtc });
 
         builder.Entity<TeamMember>()
             .HasOne(member => member.ApplicationUser)

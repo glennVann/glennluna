@@ -175,6 +175,59 @@ app.MapPut("/api/auth/profile", async (
     })
     .RequireAuthorization();
 
+app.MapGet("/api/notifications", async (
+    ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users,
+    ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var notifications = await db.UserNotifications.AsNoTracking()
+            .Where(notification => notification.UserId == user.Id)
+            .OrderByDescending(notification => notification.CreatedAtUtc)
+            .Take(20)
+            .ToListAsync();
+        var unreadCount = await db.UserNotifications.AsNoTracking()
+            .CountAsync(notification => notification.UserId == user.Id && !notification.IsRead);
+
+        return Results.Ok(new
+        {
+            UnreadCount = unreadCount,
+            Notifications = notifications.Select(ToUserNotificationResponse)
+        });
+    })
+    .RequireAuthorization();
+
+app.MapPut("/api/notifications/read", async (
+    NotificationReadRequest request,
+    ClaimsPrincipal principal,
+    UserManager<ApplicationUser> users,
+    ApplicationDbContext db) =>
+    {
+        var user = await users.GetUserAsync(principal);
+        if (user is null) return Results.Unauthorized();
+
+        var query = db.UserNotifications.Where(notification => notification.UserId == user.Id && !notification.IsRead);
+        if (!request.All)
+        {
+            var ids = request.Ids?.Where(id => id > 0).Distinct().ToArray() ?? [];
+            if (ids.Length == 0) return Results.Ok(new { updated = 0 });
+            query = query.Where(notification => ids.Contains(notification.Id));
+        }
+
+        var notifications = await query.ToListAsync();
+        foreach (var notification in notifications)
+        {
+            notification.IsRead = true;
+            notification.ReadAtUtc = DateTime.UtcNow;
+        }
+
+        await db.SaveChangesAsync();
+        return Results.Ok(new { updated = notifications.Count });
+    })
+    .RequireAuthorization();
+
 app.MapGet("/api/work/users", async (ClaimsPrincipal principal, UserManager<ApplicationUser> users) =>
     {
         var current = await users.GetUserAsync(principal);
@@ -228,6 +281,15 @@ app.MapPost("/api/work/quotes", async (QuoteRequestRequest request, ClaimsPrinci
         var quote = new QuoteRequest { OwnerUserId = user.Id };
         ApplyQuoteRequest(quote, request);
         db.QuoteRequests.Add(quote);
+        await NotifyAdminsAsync(
+            users,
+            db,
+            adminEmail,
+            "QuoteRequest",
+            "New quote request",
+            $"{quote.Name} sent a quote request for {quote.ProjectType}.",
+            "/dashboard",
+            excludeUserId: user.Id);
         await db.SaveChangesAsync();
 
         return Results.Created($"/api/work/quotes/{quote.Id}", ToQuoteRequestResponse(quote));
@@ -246,8 +308,19 @@ app.MapPut("/api/work/quotes/{id:int}/status", async (int id, QuoteStatusRequest
         if (!IsValidQuoteStatus(status))
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose New, Reviewing, Quoted, Accepted, Declined, or Closed."] });
 
+        var previousStatus = quote.Status;
         quote.Status = status!;
         quote.UpdatedAtUtc = DateTime.UtcNow;
+        if (quote.OwnerUserId is not null && !string.Equals(previousStatus, quote.Status, StringComparison.Ordinal))
+        {
+            AddNotification(
+                db,
+                quote.OwnerUserId,
+                "QuoteStatus",
+                "Quote request updated",
+                $"Your quote request is now {quote.Status}.",
+                "/dashboard");
+        }
         await db.SaveChangesAsync();
 
         return Results.Ok(ToQuoteRequestResponse(quote));
@@ -335,6 +408,14 @@ app.MapPost("/api/work/tasks", async (TaskRequest request, ClaimsPrincipal princ
             DueAtUtc = request.DueAtUtc, AssignedToUserId = assignee.Id };
         await using var transaction = await db.Database.BeginTransactionAsync();
         db.ContentTasks.Add(task); await db.SaveChangesAsync();
+        AddNotification(
+            db,
+            assignee.Id,
+            "TaskAssigned",
+            "New task assigned",
+            $"You were assigned: {task.Title}.",
+            "/dashboard");
+        await db.SaveChangesAsync();
         try
         {
             await taskEmailSender.SendAssignmentAsync(assignee, task);
@@ -402,6 +483,15 @@ app.MapPost("/api/work/designs", async (KidDesignSubmissionRequest request,
         {
             submission.Status = "Submitted";
             submission.SubmittedAtUtc = DateTime.UtcNow;
+            await NotifyKidReviewersAsync(
+                users,
+                db,
+                adminEmail,
+                "KidDesignSubmitted",
+                "New Kids Corner submission",
+                $"{user.DisplayName ?? user.Email} submitted \"{submission.Title}\" for review.",
+                "/dashboard",
+                excludeUserId: user.Id);
         }
 
         db.KidDesignSubmissions.Add(submission);
@@ -438,6 +528,15 @@ app.MapPut("/api/work/designs/{id:int}", async (int id, KidDesignSubmissionReque
         {
             submission.Status = "Submitted";
             submission.SubmittedAtUtc ??= DateTime.UtcNow;
+            await NotifyKidReviewersAsync(
+                users,
+                db,
+                adminEmail,
+                "KidDesignSubmitted",
+                "Kids Corner design submitted",
+                $"{user.DisplayName ?? user.Email} submitted \"{submission.Title}\" for review.",
+                "/dashboard",
+                excludeUserId: user.Id);
         }
 
         await db.SaveChangesAsync();
@@ -468,6 +567,7 @@ app.MapPut("/api/work/designs/{id:int}/status", async (int id, KidDesignStatusRe
             HasWatermarkableDesignFile(submission));
         if (saleErrors.Count > 0) return Results.ValidationProblem(saleErrors);
 
+        var previousStatus = submission.Status;
         submission.Status = status!;
         submission.UpdatedAtUtc = DateTime.UtcNow;
         submission.ReviewerUserId = user.Id;
@@ -476,6 +576,16 @@ app.MapPut("/api/work/designs/{id:int}/status", async (int id, KidDesignStatusRe
         if (status == "Published") submission.PublishedAtUtc ??= DateTime.UtcNow;
         if (status != "Published") submission.PublishedAtUtc = null;
         ApplyKidDesignSaleSettings(submission, request.IsForSale, request.AskingPrice, request.SaleCurrency);
+        if (!string.Equals(previousStatus, submission.Status, StringComparison.Ordinal))
+        {
+            AddNotification(
+                db,
+                submission.OwnerUserId,
+                "KidDesignStatus",
+                GetKidDesignStatusNotificationTitle(submission.Status),
+                GetKidDesignStatusNotificationMessage(submission.Title, submission.Status),
+                "/dashboard");
+        }
 
         await db.SaveChangesAsync();
         return Results.Ok(ToKidDesignSubmissionResponse(submission));
@@ -527,6 +637,13 @@ app.MapPut("/api/work/designs/{id:int}/file", async (int id, KidDesignFileReques
             submission.PublishedAtUtc = null;
             submission.IsForSale = false;
             submission.AskingPrice = null;
+            AddNotification(
+                db,
+                submission.OwnerUserId,
+                "KidDesignStatus",
+                "Design moved back to approved",
+                $"\"{submission.Title}\" is no longer public because its preview image was removed.",
+                "/dashboard");
         }
 
         await db.SaveChangesAsync();
@@ -569,9 +686,21 @@ app.MapPut("/api/work/design-offers/{id:int}/status", async (int id, KidDesignOf
         if (!IsValidKidDesignOfferStatus(status))
             return Results.ValidationProblem(new Dictionary<string, string[]> { ["status"] = ["Choose New, Reviewing, Accepted, or Declined."] });
 
+        var previousStatus = offer.Status;
         offer.Status = status!;
         offer.ReviewerUserId = user.Id;
         offer.ReviewedAtUtc = DateTime.UtcNow;
+        if (offer.KidDesignSubmission is not null &&
+            !string.Equals(previousStatus, offer.Status, StringComparison.Ordinal))
+        {
+            AddNotification(
+                db,
+                offer.KidDesignSubmission.OwnerUserId,
+                "KidDesignOfferStatus",
+                "Offer review updated",
+                $"An adult reviewer marked an offer for \"{offer.KidDesignSubmission.Title}\" as {offer.Status}.",
+                "/dashboard");
+        }
         await db.SaveChangesAsync();
 
         return Results.Ok(ToKidDesignOfferResponse(offer));
@@ -619,7 +748,7 @@ app.MapGet("/api/kids-corner/designs/{id:int}/image", async (int id, Application
         return Results.File(file.Bytes, file.ContentType, file.FileName, enableRangeProcessing: false);
     });
 
-app.MapPost("/api/kids-corner/offers", async (KidDesignOfferRequest request, ApplicationDbContext db) =>
+app.MapPost("/api/kids-corner/offers", async (KidDesignOfferRequest request, UserManager<ApplicationUser> users, ApplicationDbContext db) =>
     {
         var errors = ValidateKidDesignOffer(request);
         if (errors.Count > 0) return Results.ValidationProblem(errors);
@@ -642,6 +771,14 @@ app.MapPost("/api/kids-corner/offers", async (KidDesignOfferRequest request, App
         };
 
         db.KidDesignOffers.Add(offer);
+        await NotifyKidReviewersAsync(
+            users,
+            db,
+            adminEmail,
+            "KidDesignOffer",
+            "New offer received",
+            $"A buyer sent an offer for \"{design.Title}\".",
+            "/dashboard");
         await db.SaveChangesAsync();
 
         return Results.Created($"/api/kids-corner/offers/{offer.Id}", new { offer.Id, offer.Status });
@@ -837,6 +974,93 @@ static bool IsValidKidDesignOfferStatus(string? status) =>
 
 static bool IsValidQuoteStatus(string? status) =>
     status is "New" or "Reviewing" or "Quoted" or "Accepted" or "Declined" or "Closed";
+
+static void AddNotification(
+    ApplicationDbContext db,
+    string? userId,
+    string type,
+    string title,
+    string message,
+    string? href = null)
+{
+    if (string.IsNullOrWhiteSpace(userId)) return;
+
+    db.UserNotifications.Add(new UserNotification
+    {
+        UserId = userId,
+        Type = type.Trim(),
+        Title = title.Trim(),
+        Message = message.Trim(),
+        Href = string.IsNullOrWhiteSpace(href) ? null : href.Trim()
+    });
+}
+
+static async Task NotifyAdminsAsync(
+    UserManager<ApplicationUser> users,
+    ApplicationDbContext db,
+    string adminEmail,
+    string type,
+    string title,
+    string message,
+    string? href = null,
+    string? excludeUserId = null)
+{
+    var recipients = await users.Users
+        .Where(user =>
+            user.Role == "Admin" ||
+            (user.Email != null && user.Email == adminEmail))
+        .ToListAsync();
+
+    foreach (var recipient in recipients.DistinctBy(user => user.Id))
+    {
+        if (recipient.Id == excludeUserId) continue;
+        AddNotification(db, recipient.Id, type, title, message, href);
+    }
+}
+
+static async Task NotifyKidReviewersAsync(
+    UserManager<ApplicationUser> users,
+    ApplicationDbContext db,
+    string adminEmail,
+    string type,
+    string title,
+    string message,
+    string? href = null,
+    string? excludeUserId = null)
+{
+    var recipients = await users.Users
+        .Where(user =>
+            user.Role == "ParentReviewer" ||
+            user.Role == "Admin" ||
+            (user.Email != null && user.Email == adminEmail))
+        .ToListAsync();
+
+    foreach (var recipient in recipients.DistinctBy(user => user.Id))
+    {
+        if (recipient.Id == excludeUserId) continue;
+        AddNotification(db, recipient.Id, type, title, message, href);
+    }
+}
+
+static string GetKidDesignStatusNotificationTitle(string status) =>
+    status switch
+    {
+        "Approved" => "Design approved",
+        "Published" => "Design published",
+        "Submitted" => "Design sent back to review",
+        "Draft" => "Design moved back to draft",
+        _ => "Design status updated"
+    };
+
+static string GetKidDesignStatusNotificationMessage(string title, string status) =>
+    status switch
+    {
+        "Approved" => $"\"{title}\" was approved by an adult reviewer.",
+        "Published" => $"\"{title}\" is now published in Kids Corner.",
+        "Submitted" => $"\"{title}\" was moved back to submitted for review.",
+        "Draft" => $"\"{title}\" was moved back to draft.",
+        _ => $"\"{title}\" is now {status}."
+    };
 
 static string NormalizeCurrency(string? currency)
 {
@@ -1157,6 +1381,17 @@ static KidDesignSubmissionResponse ToKidDesignSubmissionResponse(KidDesignSubmis
         submission.OwnerUser?.DisplayName ?? submission.OwnerUser?.Email,
         submission.ReviewerUserId,
         submission.ReviewerUser?.DisplayName ?? submission.ReviewerUser?.Email);
+
+static UserNotificationResponse ToUserNotificationResponse(UserNotification notification) =>
+    new(
+        notification.Id,
+        notification.Type,
+        notification.Title,
+        notification.Message,
+        notification.Href,
+        notification.IsRead,
+        notification.CreatedAtUtc,
+        notification.ReadAtUtc);
 
 static KidDesignOfferResponse ToKidDesignOfferResponse(KidDesignOffer offer) =>
     new(
@@ -1574,6 +1809,18 @@ internal sealed record UpdateProfileRequest(
     string? ProfileImageBase64,
     string? ProfileImageContentType,
     bool RemoveProfileImage = false);
+
+internal sealed record NotificationReadRequest(int[]? Ids, bool All = false);
+
+internal sealed record UserNotificationResponse(
+    int Id,
+    string Type,
+    string Title,
+    string Message,
+    string? Href,
+    bool IsRead,
+    DateTime CreatedAtUtc,
+    DateTime? ReadAtUtc);
 
 internal sealed record RoleRequest(string? Role);
 internal sealed record QuoteRequestRequest(

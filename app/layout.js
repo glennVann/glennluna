@@ -192,7 +192,7 @@ export default function RootLayout({ children }) {
         />
         <header className="sticky top-0 z-40 border-b border-black/8 bg-[rgba(255,253,250,0.9)] backdrop-blur">
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 sm:px-10 lg:px-12">
-            <Link href="/" className="flex items-center gap-3">
+            <Link href="/" className="min-w-0 flex items-center gap-3">
               <div className="overflow-hidden rounded-2xl border border-black/10 bg-[#07111f] shadow-[0_12px_28px_rgba(21,35,33,0.16)]">
                 <Image
                   src="/glenn-luna-logo.png"
@@ -203,7 +203,7 @@ export default function RootLayout({ children }) {
                   priority
                 />
               </div>
-              <div>
+              <div className="hidden min-w-0 sm:block">
                 <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-black/40">
                   Software Developer
                 </p>
