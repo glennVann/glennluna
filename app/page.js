@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import {
+  FolderCog,
+  Globe2,
   MonitorSmartphone,
   Network,
   Rocket,
@@ -98,26 +100,31 @@ const strengths = [
 const serviceAreas = [
   {
     title: "Domain Management and Setup",
+    Icon: Globe2,
     description:
       "I can connect the domain, configure DNS, route subdomains, and sort out nameserver changes.",
   },
   {
     title: "Server Setup",
+    Icon: ServerCog,
     description:
       "I set up VPS hosting, deploy the application, configure the reverse proxy, and check that it starts reliably.",
   },
   {
     title: "Networking",
+    Icon: Network,
     description:
       "I work with wired and wireless networks, fiber connections, routing, switching, and internal DNS.",
   },
   {
     title: "File Server Setup",
+    Icon: FolderCog,
     description:
       "Shared storage, sensible folder structures, access control, and file workflows for day-to-day work.",
   },
   {
     title: "SEO and Maintenance",
+    Icon: SearchCheck,
     description:
       "I handle search improvements, fixes, upgrades, and the small jobs that keep a live site healthy.",
   },
@@ -361,11 +368,14 @@ export default function Home() {
             </h3>
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {serviceAreas.map((service) => (
+            {serviceAreas.map(({ Icon, ...service }) => (
               <article
                 key={service.title}
-                className="rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6"
+                className="group rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6 transition hover:-translate-y-1 hover:border-[#dd8c36]/25 hover:shadow-[0_18px_40px_rgba(21,35,33,0.09)]"
               >
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#f7eadb] text-[#b66c1e] ring-1 ring-[#dd8c36]/12 transition group-hover:bg-[#dd8c36] group-hover:text-white">
+                  <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+                </div>
                 <h4 className="text-xl font-semibold text-[#152321]">
                   {service.title}
                 </h4>
