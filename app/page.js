@@ -1,5 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import {
+  MonitorSmartphone,
+  Network,
+  Rocket,
+  SearchCheck,
+  ServerCog,
+} from "lucide-react";
 import TeamSection from "./team-section";
 
 const linkedInIcon = (
@@ -44,26 +51,31 @@ export const metadata = {
 const focusAreas = [
   {
     title: "Frontend Engineering",
+    Icon: MonitorSmartphone,
     description:
       "Responsive interfaces that are straightforward to use on phones, tablets, and desktops.",
   },
   {
     title: "Backend Development",
+    Icon: ServerCog,
     description:
       "APIs, business logic, authentication, and integrations that keep the application running behind the scenes.",
   },
   {
     title: "Product Delivery",
+    Icon: Rocket,
     description:
       "Turning an idea into a working release, then improving it based on how people actually use it.",
   },
   {
     title: "SEO and Maintenance",
+    Icon: SearchCheck,
     description:
       "Search setup, performance work, bug fixes, and updates after the site goes live.",
   },
   {
     title: "Infrastructure Setup",
+    Icon: Network,
     description:
       "Servers, networking, deployments, and shared storage when a project needs more than application code.",
   },
@@ -318,11 +330,14 @@ export default function Home() {
             </h3>
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
-            {focusAreas.map((area) => (
+            {focusAreas.map(({ Icon, ...area }) => (
               <article
                 key={area.title}
-                className="rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6"
+                className="group rounded-[1.75rem] border border-black/8 bg-[#fcfaf6] p-6 transition hover:-translate-y-1 hover:border-[#1b5e59]/20 hover:shadow-[0_18px_40px_rgba(21,35,33,0.09)]"
               >
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#e9f1ee] text-[#1b5e59] ring-1 ring-[#1b5e59]/10 transition group-hover:bg-[#1b5e59] group-hover:text-white">
+                  <Icon aria-hidden="true" className="h-6 w-6" strokeWidth={1.8} />
+                </div>
                 <h4 className="text-xl font-semibold text-[#152321]">
                   {area.title}
                 </h4>
